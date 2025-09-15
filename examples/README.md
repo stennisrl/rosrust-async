@@ -37,24 +37,21 @@ Both the [`subscriber`](subscriber.rs) & [`subscriber_callback`](subscriber_call
 Since these examples use the standard `String` message, you can also use the `rostopic` CLI tool to interact with them. 
 Refer to the comments inside each of the examples for more information.
 
-<div class="term_demo">
-    <div>
-        <img src="./assets/example-pubsub.svg">
-            <br>
-            <i>Publisher & Subscriber examples running in tandem</i>
-    </div>
-    <div>
-        <img src="./assets/example-pub-rostopic.svg">
+<p align="center">
+    <img src="./assets/example-pubsub.svg">
         <br>
-        <i>Publisher example interacting with the rostopic CLI tool</i>
-    </div>
-    <div>
-        <img src="./assets/example-sub-rostopic.svg">
-        <br>
-        <i>Subscriber example interacting with the rostopic CLI tool</i>
-    </div>
-</div>
-
+        <i>Publisher & Subscriber examples running in tandem</i>
+</p>
+<p align="center">
+    <img src="./assets/example-pub-rostopic.svg">
+    <br>
+    <i>Publisher example interacting with the rostopic CLI tool</i>
+</p>
+<p align="center">
+    <img src="./assets/example-sub-rostopic.svg">
+    <br>
+    <i>Subscriber example interacting with the rostopic CLI tool</i>
+</p>
 
 ---
 
@@ -65,24 +62,9 @@ The [`service_server`](service_server.rs) example is what actually provides the 
 
 This pair of examples relies on the [`TwoInts`](std_msgs/srv/TwoInts.srv) service description.
 
-<div class="term_demo">
-    <div>
-        <img src="./assets/example-svcpair.svg">
-            <br>
-            <i>Service Client & Service Server examples running in tandem</i>
-    </div>
-</div>
 
-<style>
-.term_demo {
-	display: flex;
-	flex-wrap: wrap;
-    gap: 1rem;
-    justify-content: flex-start | space-evenly;
-}
-
-.term_demo div{
-    text-align: center;
-    align-self: center;
-}
-</style>
+<p align="center">
+    <img src="./assets/example-svcpair.svg">
+    <br>
+    <i>Service Client & Service Server examples running in tandem</i>
+</p>
