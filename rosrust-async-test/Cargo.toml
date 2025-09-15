@@ -1,0 +1,21 @@
+[package]
+name = "rosrust_async_test"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[dev-dependencies]
+rosrust_async = {path = "../rosrust-async"}
+tokio = {version = "1.44.2", features = ["macros", "rt-multi-thread", "signal", "fs", "process"]}
+tracing = "0.1.41"
+tracing-subscriber = {version = "0.3.19", features = ["fmt", "std", "env-filter"]}
+tracing-appender = "0.2.3"
+ros-core-rs = "0.2.4"
+temp-env = "0.3.6"
+url = "2.5.4"
+reqwest = "0.12.20"
+async-trait = "0.1.88"
+futures = "0.3.31"
+rosrust = "0.9.12"
+anyhow = "1.0.99"

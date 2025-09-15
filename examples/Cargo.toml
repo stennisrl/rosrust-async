@@ -1,0 +1,36 @@
+[package]
+name = "examples"
+version = "0.0.0"
+publish = false
+edition = "2021"
+license = "MIT"
+
+[dev-dependencies]
+anyhow = "1.0.98"
+rosrust = "0.9.12"
+ros-core-rs = "0.2.4"
+rosrust_async = {path = "../rosrust-async"}
+tokio = {version = "1.44.2", features = ["macros", "rt-multi-thread", "signal", "fs", "process"]}
+tracing = "0.1.41"
+tracing-subscriber = {version = "0.3.19", features = ["fmt", "std", "env-filter"]}
+url = "2.5.4"
+
+[[example]]
+name = "subscriber"
+path = "subscriber.rs"
+
+[[example]]
+name = "subscriber_callback"
+path = "subscriber_callback.rs"
+
+[[example]]
+name = "publisher"
+path = "publisher.rs"
+
+[[example]]
+name = "service_client"
+path = "service_client.rs"
+
+[[example]]
+name = "service_server"
+path = "service_server.rs"

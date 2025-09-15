@@ -1,0 +1,28 @@
+# rosrust-async
+
+A Native [ROS1 client](https://wiki.ros.org/Client%20Libraries) implementation in async Rust.
+
+
+## Features
+* **Designed to leverage the code generation functionality provided by [rosrust](https://github.com/adnanademovic/rosrust)**
+* Complete pub/sub messaging with support for latched topics & `TCP_NODELAY`
+* Service client and server implementations with support for async handlers
+* Full support for the [ROS1 Parameter Server](https://wiki.ros.org/Parameter%20Server)
+* Optional `Clock` module for interacting with [simulated time](https://wiki.ros.org/Clock#Using_Simulation_Time_from_the_.2Fclock_Topic)
+* Provides client implementations for both the [ROS Master](https://wiki.ros.org/ROS/Master_API) & [ROS Slave APIs](https://wiki.ros.org/ROS/Slave_API)
+
+## Getting Started
+The [examples directory](https://github.com/stennisrl/rosrust-async/tree/main/examples) contains a handful of examples showing how to use this crate. 
+
+The `rosrust-async-test` crate is also worth looking at. These tests are a bit verbose & hard on the eyes, but they can also serve as a good reference for more complex use-cases.
+
+## Status
+*Although ROS1 has reached [EOL](https://www.ros.org/blog/noetic-eol/) as of 2025-05-31, this project is being actively maintained!*
+
+The API is mostly complete, aside from a few rough spots. Check out the project issues page for a summary of what is being worked on.
+
+**Note:** Documentation is limited in this initial release. Improving both API docs and examples is a top priority. Please open an issue if you encounter any problems or have questions.
+
+
+## License
+This project is licensed under the [MIT license](https://github.com/stennisrl/rosrust-async/tree/main/LICENSE). 

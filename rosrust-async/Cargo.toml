@@ -1,0 +1,39 @@
+[package]
+name = "rosrust_async"
+version = "0.1.0"
+rust-version = "1.82.0"
+authors = ["stennisrl <22553541+stennisrl@users.noreply.github.com>"]
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/stennisrl/rosrust-async"
+categories = ["asynchronous"]
+keywords = ["rosrust", "async", "ros", "ros1"]
+edition = "2021"
+
+[dependencies]
+rosrust = "0.9.12"
+byteorder = "1.5.0"
+dxr = {version = "0.7.0", features = ["derive"]}
+tokio = "1.44.2"
+url = "2.5.3"
+serde = "1.0.215"
+thiserror = "2.0.3"
+tokio-util = {version = "0.7.13", features = ["rt", "codec"]}
+ractor = {version = "0.15.3", default-features = false, features=["tokio_runtime", "message_span_propogation"]}
+axum = "0.7.9"
+async-trait = "0.1.83"
+pin-project = "1.1.8"
+tracing = "0.1.41"
+reqwest = "0.12.19"
+diatomic-waker = "0.2.3"
+quick-xml = "0.37.5"
+bytes = "1.10.1"
+gethostname = "1.0.2"
+async-shutdown = "0.2.2"
+futures-util = "0.3.31"
+md-5 = "0.10.6"
+ros_message = "0.1.1"
+regex = "1.11.2"
+
+[dev-dependencies]
+tokio = {version = "1.44.2", features = ["macros", "rt-multi-thread", "signal", "fs", "process"]}

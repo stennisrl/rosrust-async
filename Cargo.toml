@@ -1,0 +1,3 @@
+[workspace]
+members = ["rosrust-async", "rosrust-async-test", "examples"] 
+resolver = "2"
