@@ -3,6 +3,14 @@
 A Native [ROS1 client](https://wiki.ros.org/Client%20Libraries) implementation in async Rust.
 
 
+[![Build Status][ci-badge]][ci-url]
+[![Crates.io][crates-badge]][crates-url]
+
+[ci-badge]: https://img.shields.io/github/actions/workflow/status/stennisrl/rosrust-async/ci.yml?branch=main
+[ci-url]: https://github.com/stennisrl/rosrust-async/actions?query=workflow%3Aci+branch%3Amain
+[crates-badge]: https://img.shields.io/crates/v/rosrust-async
+[crates-url]: https://crates.io/crates/rosrust-async
+
 ## Features
 * **Designed to leverage the code generation functionality provided by [rosrust](https://github.com/adnanademovic/rosrust)**
 * Complete pub/sub messaging with support for latched topics & `TCP_NODELAY`
