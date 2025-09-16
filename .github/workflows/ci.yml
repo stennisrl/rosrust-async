@@ -1,0 +1,30 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Test with Rust ${{matrix.rust-version}}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 1.82 is our MSRV
+        rust-version: ["1.82", stable]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust-version }}
+
+      - uses: cargo-bins/cargo-binstall@main
+
+      - name: Install cargo nextest
+        run: cargo binstall cargo-nextest --secure --no-confirm
+        env:
+          BINSTALL_DISABLE_TELEMETRY: true
+
+      - run: cargo nextest run 
