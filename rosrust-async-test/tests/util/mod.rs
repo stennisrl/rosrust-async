@@ -55,6 +55,7 @@ pub async fn setup() -> (Node, WorkerGuard) {
             master_addr.ip(),
             master_addr.port()
         ))
+        .advertise_ip(Ipv4Addr::LOCALHOST.into())
         .build()
         .await
         .unwrap();
@@ -184,7 +185,7 @@ where
         let msg = RosString {
             data: format!("{base_message}{delimiter}{msg_id}"),
         };
-
+        println!("EXPECTED: {msg:?}");
         publisher.send_message(&msg).await.unwrap();
 
         let recv_msg = tokio::time::timeout(Duration::from_secs(5), subscriber.recv_message())
@@ -202,6 +203,7 @@ where
             "Message did not contain \"{base_message}\""
         );
 
+        println!("ACTUAL: {recv_msg:?}");
         let recv_id: usize = id.parse().expect("Failed to parse message ID");
 
         assert_eq!(msg_id, recv_id, "Message IDs did not match");
