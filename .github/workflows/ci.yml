@@ -25,4 +25,4 @@ jobs:
       - name: Install cargo nextest
         run: cargo binstall cargo-nextest --secure --no-confirm --disable-telemetry
 
-      - run: cargo nextest run --exclude examples
+      - run: cargo nextest run --workspace --exclude examples 
