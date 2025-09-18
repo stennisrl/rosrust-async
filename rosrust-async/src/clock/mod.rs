@@ -13,7 +13,10 @@ use tokio::sync::{broadcast::error::RecvError, mpsc};
 use tokio_util::sync::{CancellationToken, DropGuard};
 use tracing::{debug, error, trace, warn};
 
-use crate::node::{Node, NodeError, SubscriberError};
+use crate::{
+    node::{Node, NodeError, SubscriberError},
+    TypedSubscriber,
+};
 
 pub mod rate;
 pub mod sleep;
@@ -45,6 +48,8 @@ impl PartialEq for TimerEntry {
         self.deadline == other.deadline
     }
 }
+
+type TimerQueue = BinaryHeap<Reverse<TimerEntry>>;
 
 #[derive(Default)]
 struct EncodedTime {
@@ -89,16 +94,18 @@ pub struct ClockState {
     timer_tx: mpsc::UnboundedSender<TimerEntry>,
 }
 
-type TimerQueue = BinaryHeap<Reverse<TimerEntry>>;
-
 impl Clock {
     pub async fn new(node: &Node) -> Result<Self, NodeError> {
-        // todo: should we check for /use_sim_time here? or rely on the end user?
+        let clock_subscriber = node.subscribe("/clock", 1, false).await?;
+
+        Ok(Self::from_subscriber(clock_subscriber).await)
+    }
+
+    pub async fn from_subscriber(mut clock_subscriber: TypedSubscriber<ClockMsg>) -> Self {
         let cancel_token = CancellationToken::new();
 
         let mut timers = TimerQueue::new();
         let (timer_tx, mut timer_rx) = mpsc::unbounded_channel();
-        let mut clock_subscriber = node.subscribe::<ClockMsg>("/clock", 1, false).await?;
 
         let clock_state = Arc::new(ClockState {
             time: EncodedTime::default(),
@@ -145,7 +152,7 @@ impl Clock {
                 }
 
                 timer_rx.close();
-                
+
                 for timer in timers
                     .into_iter()
                     .map(|reverse| reverse.0)
@@ -156,17 +163,13 @@ impl Clock {
             });
         }
 
-        Ok(Self {
+        Self {
             state: clock_state,
             _drop_guard: Arc::new(cancel_token.drop_guard()),
-        })
+        }
     }
 
-    fn on_tick(
-        clock_msg: ClockMsg,
-        clock_state: &Arc<ClockState>,
-        timers: &mut TimerQueue,
-    ) {
+    fn on_tick(clock_msg: ClockMsg, clock_state: &Arc<ClockState>, timers: &mut TimerQueue) {
         let current_ts = clock_msg.clock;
         let previous_ts = clock_state.time.get();
 

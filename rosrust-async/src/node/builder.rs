@@ -1,6 +1,6 @@
 use std::{
     env,
-    net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4}, str::FromStr,
+    net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4},
 };
 
 use tokio::net::TcpListener;
@@ -38,13 +38,7 @@ impl NodeBuilder {
         NodeBuilder::default()
     }
 
-    fn resolve_name(&self) -> String {
-        self.node_name
-            .clone()
-            .unwrap_or_else(|| String::from("/rosrust_async"))
-    }
-
-    fn resolve_ip(&self) -> Option<IpAddr> {
+    fn configured_ip(&self) -> Option<IpAddr> {
         self.advertise_ip.or_else(|| {
             env::var("ROS_IP")
                 .ok()
@@ -52,10 +46,16 @@ impl NodeBuilder {
         })
     }
 
-    fn resolve_hostname(&self) -> Option<String> {
+    fn configured_hostname(&self) -> Option<String> {
         self.advertise_hostname
             .clone()
             .or_else(|| env::var("ROS_HOSTNAME").ok())
+    }
+
+    fn resolve_name(&self) -> String {
+        self.node_name
+            .clone()
+            .unwrap_or_else(|| String::from("/rosrust_async"))
     }
 
     fn resolve_bind_address(&self) -> SocketAddr {
@@ -64,10 +64,10 @@ impl NodeBuilder {
             .unwrap_or(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, 0).into())
     }
 
-    fn resolve_api_url(&self, bound_addr: &SocketAddr) -> Result<Url, BuilderError> {
+    fn resolve_hostname(&self) -> Result<String, BuilderError> {
         let host = match self
-            .resolve_hostname()
-            .or_else(|| self.resolve_ip().map(|ip| ip.to_string()))
+            .configured_hostname()
+            .or_else(|| self.configured_ip().map(|ip| ip.to_string()))
         {
             Some(host) => host,
             None => gethostname::gethostname().into_string().map_err(|os_str| {
@@ -75,9 +75,7 @@ impl NodeBuilder {
             })?,
         };
 
-        let port = bound_addr.port();
-
-        Ok(Url::parse(&format!("http://{host}:{port}"))?)
+        Ok(host)
     }
 
     fn resolve_master_url(&self) -> Result<Url, BuilderError> {
@@ -107,7 +105,6 @@ impl NodeBuilder {
     /// If unset, the builder will attempt to use the `ROS_IP` env variable before falling back on the
     /// hostname resolution logic.
     pub fn advertise_ip(mut self, ip: IpAddr) -> Self {
-        Ipv4Addr::from_str("192.168.100.6").unwrap();
         self.advertise_ip = Some(ip);
         self
     }
@@ -122,10 +119,7 @@ impl NodeBuilder {
         self
     }
 
-    /// Configure the address that the XML-RPC API is bound to.
-    ///
-    /// This also dictates which IP address various TCPROS components will bind to, such as
-    /// Subscriptions and Service servers. The ports for these components are always randomly generated.
+    /// Configure what address the node's XML-RPC API server will bind to.
     ///
     /// If unspecified, defaults to `0.0.0.0` (`INADDR_ANY`) with a randomly selected port number.
     pub fn bind_address(mut self, address: SocketAddr) -> Self {
@@ -147,12 +141,10 @@ impl NodeBuilder {
         let bind_address = self.resolve_bind_address();
         let api_listener = TcpListener::bind(bind_address).await?;
 
-        let bound_addr = api_listener.local_addr()?;
-
         let node = Node::new(
-            &self.resolve_name(),
+            self.resolve_name(),
+            self.resolve_hostname()?,
             api_listener,
-            self.resolve_api_url(&bound_addr)?,
             self.resolve_master_url()?,
         )
         .await?;

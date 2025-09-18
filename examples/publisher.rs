@@ -37,13 +37,9 @@ use rosrust_async::builder::NodeBuilder;
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env().add_directive("publisher=info".parse()?))
-        .without_time()
         .init();
 
-    let node = NodeBuilder::new()
-        .name("/publisher_node")
-        .build()
-        .await?;
+    let node = NodeBuilder::new().name("/publisher_node").build().await?;
 
     let publisher = node
         .publish::<RosString>("/chatter", 1, false, false)

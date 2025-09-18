@@ -14,6 +14,7 @@ tokio = {version = "1.44.2", features = ["macros", "rt-multi-thread", "signal", 
 tracing = "0.1.41"
 tracing-subscriber = {version = "0.3.19", features = ["fmt", "std", "env-filter"]}
 url = "2.5.4"
+gilrs = "0.11.0"
 
 [[example]]
 name = "subscriber"

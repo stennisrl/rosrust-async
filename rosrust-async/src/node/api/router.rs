@@ -66,6 +66,7 @@ pub fn build_router(state: &Arc<NodeState>) -> axum::Router {
         .add_method(
             "requestTopic",
             Box::new(RequestTopicHandler {
+                hostname: state.hostname.clone(),
                 pub_actor: state.pub_actor.clone(),
             }),
         )
@@ -256,6 +257,7 @@ impl Handler for PublisherUpdateHandler {
 }
 
 pub struct RequestTopicHandler {
+    hostname: String,
     pub_actor: ActorRef<PublisherActorMsg>,
 }
 
@@ -267,29 +269,26 @@ impl Handler for RequestTopicHandler {
 
         trace!("requestTopic XML-RPC method called: [caller_id: {caller_id}, protocols: {protocols:?}]",);
 
-        let publisher_channel = call!(self.pub_actor, |reply| {
-            PublisherActorMsg::RequestTopic {
+        let publisher_addr = call!(self.pub_actor, |reply| {
+            PublisherActorMsg::GetPublisherAddress {
                 topic_name: topic_name.clone(),
                 reply,
             }
         })
         .map_err(|e| server_error(format!("Failed to set up publisher channel: {e}")))?;
 
-        match publisher_channel {
-            Some(channel_addr) => {
+        match publisher_addr {
+            Some(address) => {
                 trace!(
-                    "Publisher channel for topic \"{topic_name}\" ready at \"{}:{}\"",
-                    channel_addr.ip(),
-                    channel_addr.port()
+                    "Publisher channel for topic \"{}\" ready at \"{}:{}\"",
+                    topic_name,
+                    self.hostname,
+                    address.port()
                 );
 
                 Ok(HandlerResponse::new(
-                    format!("ready on {}:{}", channel_addr.ip(), channel_addr.port()),
-                    (
-                        "TCPROS",
-                        channel_addr.ip().to_string(),
-                        channel_addr.port() as i32,
-                    ),
+                    format!("ready on {}:{}", self.hostname, address.port()),
+                    ("TCPROS", self.hostname.clone(), address.port() as i32),
                 )?)
             }
             None => Err(invalid_request(format!(

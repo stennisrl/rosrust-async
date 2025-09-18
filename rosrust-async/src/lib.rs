@@ -46,12 +46,16 @@
 //!
 //! ## Publishing to a Topic
 //!
-//! [Node::publish](crate::node::Node#method.publish) creates a new ROS publication and returns a handle for interacting with it. These handles can be freely cloned as needed. 
-//! rosrust-async will only clean up & unregister the underlying publication once all handles have been dropped.
+//! [Node::publish](crate::node::Node#method.publish) creates a new ROS publication and returns a handle for interacting with it. 
+//! These handles can be freely cloned as needed - rosrust-async will only clean up & unregister the underlying publication once 
+//! all handles have been dropped.
 //!
-//! Enabling the `tcp_nodelay` argument will force all subscribers to use a socket with TCP_NODELAY set. When the `latched` argument is enabled, 
-//! the publication will store the last published message and automatically send it to any future subscribers that connect. 
-//! This can be useful for data that is static or infrequently updated.
+//! Enabling `latched` will cause the publication to store the last published message and automatically 
+//! send it to any future subscribers that connect. This can be useful for data that is static or infrequently updated.
+//! 
+//! Enabling `tcp_nodelay` will set `TCP_NODELAY` on the sockets used to communicate with subscriptions.
+//! This will disable Nagle's algorithm, which can help reduce latency when publishing small messages
+//! at the cost of increased bandwidth. If you are unsure, leave this disabled.
 //!
 //! ```rust
 //!
@@ -80,8 +84,9 @@
 //!
 //! ## Subscribing to a Topic
 //!
-//! [Node::subscribe](crate::node::Node#method.subscribe) creates a new ROS subscription and returns a handle for interacting with it. These handles can be freely cloned as needed. 
-//! rosrust-async will only clean up & unregister the underlying subscription once all handles have been dropped.
+//! [Node::subscribe](crate::node::Node#method.subscribe) creates a new ROS subscription and returns a handle for interacting with it. 
+//! These handles can be freely cloned as needed - rosrust-async will only clean up & unregister the underlying subscription once 
+//! all handles have been dropped.
 //!
 //! Enabling the `tcp_nodelay` argument will request the publisher set TCP_NODELAY on the socket if possible.
 //!

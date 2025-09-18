@@ -27,6 +27,10 @@ pub enum PublisherActorMsg {
     GetPublications {
         reply: RpcReplyPort<Vec<(String, String)>>,
     },
+    GetPublisherAddress {
+        topic_name: String,
+        reply: RpcReplyPort<Option<SocketAddr>>,
+    },
     GetConnectedSubscriberIDs {
         topic_name: String,
         reply: RpcReplyPort<Option<BTreeSet<String>>>,
@@ -46,10 +50,6 @@ pub enum PublisherActorMsg {
     },
     DropPublisher {
         topic_name: String,
-    },
-    RequestTopic {
-        topic_name: String,
-        reply: RpcReplyPort<Option<SocketAddr>>,
     },
 }
 
@@ -120,6 +120,10 @@ impl Actor for PublisherActor {
                 reply.send(Self::get_publications(state))?;
             }
 
+            PublisherActorMsg::GetPublisherAddress { topic_name, reply } => {
+                reply.send(Self::get_publisher_address(state, topic_name).await)?;
+            }
+
             PublisherActorMsg::GetConnectedSubscriberIDs { topic_name, reply } => {
                 reply.send(Self::get_connected_subscriber_ids(state, topic_name).await)?;
             }
@@ -156,9 +160,6 @@ impl Actor for PublisherActor {
                     warn!("Encountered an error while handling drop guard message: {e}");
                 }
             }
-            PublisherActorMsg::RequestTopic { topic_name, reply } => {
-                reply.send(Self::request_topic(state, topic_name).await)?;
-            }
         }
 
         Ok(())
@@ -189,9 +190,25 @@ impl PublisherActor {
             .publications
             .iter()
             .map(|(topic_name, (_, publication))| {
-                (topic_name.clone(), publication.topic().spec.msg_type.clone())
+                (
+                    topic_name.clone(),
+                    publication.topic().spec.msg_type.clone(),
+                )
             })
             .collect()
+    }
+
+    #[instrument(skip(state))]
+    pub async fn get_publisher_address(
+        state: &mut PublisherActorState,
+        topic_name: String,
+    ) -> Option<SocketAddr> {
+        trace!("GetPublisherAddress called");
+
+        state
+            .publications
+            .get(&topic_name)
+            .map(|(_, publication)| publication.address().clone())
     }
 
     #[instrument(skip(state))]
@@ -224,7 +241,9 @@ impl PublisherActor {
 
             // If a publication already exists, return a new handle pointing to it.
             if let Some(guard) = guard.upgrade() {
-                topic.spec.validate_compatibility(&publication.topic().spec)?;
+                topic
+                    .spec
+                    .validate_compatibility(&publication.topic().spec)?;
 
                 return Ok(Publisher::new(publication.data_sender(), guard));
             }
@@ -279,19 +298,6 @@ impl PublisherActor {
         }
 
         Ok(())
-    }
-
-    #[instrument(skip(state))]
-    pub async fn request_topic(
-        state: &mut PublisherActorState,
-        topic_name: String,
-    ) -> Option<SocketAddr> {
-        trace!("RequestTopic called");
-
-        state
-            .publications
-            .get(&topic_name)
-            .map(|(_, publication)| publication.address().to_owned())
     }
 }
 

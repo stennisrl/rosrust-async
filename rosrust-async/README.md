@@ -1,7 +1,6 @@
 # rosrust-async
 
-A Native [ROS1 client](https://wiki.ros.org/Client%20Libraries) implementation in async Rust.
-
+A native [ROS1 client](https://wiki.ros.org/Client%20Libraries) implementation in async Rust.
 
 [![Build Status][ci-badge]][ci-url]
 [![Crates.io][crates-badge]][crates-url]
@@ -13,11 +12,12 @@ A Native [ROS1 client](https://wiki.ros.org/Client%20Libraries) implementation i
 
 ## Features
 * **Designed to leverage the code generation functionality provided by [rosrust](https://github.com/adnanademovic/rosrust)**
-* Complete pub/sub messaging with support for latched topics & `TCP_NODELAY`
-* Service client and server implementations with support for async handlers
-* Full support for the [ROS1 Parameter Server](https://wiki.ros.org/Parameter%20Server)
-* Optional `Clock` module for interacting with [simulated time](https://wiki.ros.org/Clock#Using_Simulation_Time_from_the_.2Fclock_Topic)
-* Provides client implementations for both the [ROS Master](https://wiki.ros.org/ROS/Master_API) & [ROS Slave APIs](https://wiki.ros.org/ROS/Slave_API)
+* Publishers & subscribers with support for latched topics and configuring `TCP_NODELAY`
+* Service clients & servers with support for persistent connections
+* Define services using async functions or closures returning async blocks
+* Support for the [ROS1 Parameter Server](https://wiki.ros.org/Parameter%20Server)
+* Client implementations for both the [ROS Master](https://wiki.ros.org/ROS/Master_API) & [ROS Slave APIs](https://wiki.ros.org/ROS/Slave_API)
+* Optional Clock module for interacting with [simulated time](https://wiki.ros.org/Clock#Using_Simulation_Time_from_the_.2Fclock_Topic)
 
 ## Getting Started
 The [examples directory](https://github.com/stennisrl/rosrust-async/tree/main/examples) contains a handful of examples showing how to use this crate. 

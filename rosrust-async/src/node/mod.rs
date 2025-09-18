@@ -57,6 +57,7 @@ pub struct Node {
 
 struct NodeState {
     name: String,
+    hostname: String,
     address: SocketAddr,
     api_url: Url,
     master_url: Url,
@@ -71,12 +72,14 @@ impl Node {
     /// Construct a new Node.
     pub async fn new(
         name: impl Into<String>,
+        hostname: impl Into<String>,
         api_listener: TcpListener,
-        api_url: Url,
         master_url: Url,
     ) -> NodeResult<Self> {
         let name = name.into();
+        let hostname = hostname.into();
         let bind_address = api_listener.local_addr()?;
+        let api_url = Url::parse(&format!("http://{}:{}", hostname, bind_address.port())).unwrap();
 
         info!("Launching node: [name: \"{name}\", url: \"{api_url}\", bound_addr: \"{bind_address}\", master_url: \"{master_url}\"]");
 
@@ -117,6 +120,7 @@ impl Node {
 
         let state = Arc::new(NodeState {
             name,
+            hostname,
             address: bind_address,
             api_url,
             master_url,
@@ -165,6 +169,11 @@ impl Node {
     /// Get the node's name.
     pub fn name(&self) -> &str {
         &self.state.name
+    }
+
+    /// Get the node's hostname.
+    pub fn hostname(&self) -> &str {
+        &self.state.hostname
     }
 
     /// Get the address that the node's XML-RPC server is bound to.

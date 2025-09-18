@@ -36,8 +36,14 @@ pub enum ClientLinkError {
     MasterClient(#[from] MasterClientError),
     #[error("Failed to parse service url: {0}")]
     UrlParse(#[from] url::ParseError),
-    #[error("Could not convert service URI to a socket address: {0}")]
-    Address(Url),
+    #[error("Failed to resolve service URL to a socket address: {service_url}")]
+    ServiceResolution {
+        service_url: Url,
+        #[source]
+        error: io::Error,
+    },
+    #[error("No addresses available for service URL: {0}")]
+    NoServiceAddresses(Url),
     #[error("Incompatible headers: {0}")]
     Incompatible(#[from] CompatibilityError),
     #[error("RPC response contained invalid status code: {0}")]
@@ -148,19 +154,22 @@ impl ServiceClientLink {
         client_header_bytes: &[u8],
         probe_header_bytes: &[u8],
     ) -> Result<ConnectionState, ClientLinkError> {
-        trace!(
-            "Attempting to resolve address for service \"{}\"",
-            service.name
-        );
+        trace!("Attempting to resolve address for service");
+        let service_url = Url::parse(&master_client.lookup_service(&service.name).await?)?;
 
-        let service_uri = Url::parse(&master_client.lookup_service(&service.name).await?)?;
-        let address = service_uri
-            .socket_addrs(|| None)?
+        trace!("Found service at url \"{service_url}\"");
+
+        let address = service_url
+            .socket_addrs(|| None)
+            .map_err(|error| ClientLinkError::ServiceResolution {
+                service_url: service_url.clone(),
+                error,
+            })?
             .first()
             .cloned()
-            .ok_or_else(|| ClientLinkError::Address(service_uri))?;
+            .ok_or(ClientLinkError::NoServiceAddresses(service_url.clone()))?;
 
-        trace!("Resolved service \"{}\" to {}", service.name, address);
+        trace!("Resolved service url \"{service_url}\" to \"{address}\"");
 
         let probe_response = Self::probe_service(&address, probe_header_bytes).await?;
         header::validate_server_compatibility(service, &probe_response)?;
