@@ -7,8 +7,8 @@ use std::io;
 
 use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
-rosrust::rosmsg_include!(std_msgs / TwoInts);
-use std_msgs::{TwoInts, TwoIntsReq};
+rosrust::rosmsg_include!(example_srvs / TwoInts);
+use example_srvs::{TwoInts, TwoIntsReq};
 
 use rosrust_async::builder::NodeBuilder;
 

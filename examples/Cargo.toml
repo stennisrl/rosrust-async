@@ -17,6 +17,10 @@ url = "2.5.4"
 gilrs = "0.11.0"
 
 [[example]]
+name = "turtle_teleop"
+path = "turtle_teleop.rs"
+
+[[example]]
 name = "subscriber"
 path = "subscriber.rs"
 
