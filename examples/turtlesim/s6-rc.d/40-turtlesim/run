@@ -1,0 +1,5 @@
+#!/command/with-contenv bash
+
+export DISPLAY=:0
+source /opt/ros/$(rosversion -d)/setup.bash
+rosrun turtlesim turtlesim_node __ip:=$(hostname -i)

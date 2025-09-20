@@ -1,0 +1,8 @@
+#!/command/execlineb -P
+
+foreground {
+    bash -c "VNC_PASSWORD=$(pwgen -vcnsB 16 1) && \
+            echo $VNC_PASSWORD > /run/vncpass-raw && \
+            x11vnc -storepasswd $VNC_PASSWORD /run/vncpass
+        "
+}

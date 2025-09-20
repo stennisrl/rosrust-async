@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <!--
+    A slighly customized version of the vnc_lite.html provided by noVNC.
+    The original lives here: https://github.com/novnc/noVNC/blob/master/vnc_lite.html
+    -->
+
+    <title>TurtleSim</title>
+
+    <style>
+        body {
+            margin: 0;
+            background-color: #3E5879;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        #top_bar {
+            background-color: #213555;
+            color: #D8C4B6;
+            font: bold 14px Sans-Serif;
+            padding: 6px 5px 5px 5px;
+            border-bottom: 1px outset;
+        }
+
+        #status {
+            text-align: center;
+        }
+
+        #screen {
+            flex: 1;
+            overflow: hidden;
+        }
+    </style>
+
+    <script type="module" crossorigin="anonymous">
+        import RFB from './core/rfb.js';
+
+        let rfb;
+        let desktopName;
+
+        function connectedToServer(e) {
+            status("Connected to " + desktopName);
+        }
+
+        function disconnectedFromServer(e) {
+            if (e.detail.clean) {
+                status("Disconnected");
+            } else {
+                status("Something went wrong, connection is closed");
+            }
+        }
+
+        function credentialsAreRequired(e) {
+            const password = prompt("Password required:");
+            rfb.sendCredentials({ password: password });
+        }
+
+        function updateDesktopName(e) {
+            desktopName = e.detail.name;
+        }
+
+        function status(text) {
+            document.getElementById('status').textContent = text;
+        }
+
+        function readQueryVariable(name, defaultValue) {
+            const re = new RegExp('.*[?&]' + name + '=([^&#]*)'),
+                match = document.location.href.match(re);
+
+            if (match) {
+                return decodeURIComponent(match[1]);
+            }
+
+            return defaultValue;
+        }
+
+        const host = readQueryVariable('host', window.location.hostname);
+        let port = readQueryVariable('port', window.location.port);
+        const password = readQueryVariable('password');
+        const path = readQueryVariable('path', 'websockify');
+
+        status("Connecting");
+
+        let url;
+        if (window.location.protocol === "https:") {
+            url = 'wss';
+        } else {
+            url = 'ws';
+        }
+        url += '://' + host;
+        if (port) {
+            url += ':' + port;
+        }
+        url += '/' + path;
+
+        rfb = new RFB(document.getElementById('screen'), url,
+            { credentials: { password: password }, compressionLevel: 0, qualityLevel: 9 });
+
+        rfb.addEventListener("connect", connectedToServer);
+        rfb.addEventListener("disconnect", disconnectedFromServer);
+        rfb.addEventListener("credentialsrequired", credentialsAreRequired);
+        rfb.addEventListener("desktopname", updateDesktopName);
+
+        rfb.viewOnly = true;
+        rfb.scaleViewport = true;
+    </script>
+</head>
+
+<body>
+    <div id="top_bar">
+        <div id="status">Loading...</div>
+    </div>
+    <div id="screen">
+    </div>
+</body>
+
+</html>

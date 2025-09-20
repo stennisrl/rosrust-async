@@ -1,0 +1,3 @@
+#!/command/with-contenv bash
+
+exec Xvfb -screen 0 500x500x24 > /dev/null 2>&1

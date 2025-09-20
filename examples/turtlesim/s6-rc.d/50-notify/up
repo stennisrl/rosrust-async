@@ -1,0 +1,5 @@
+#!/usr/bin/with-contenv bash
+
+bash -c "echo \"TurtleSim is Ready!
+Access URL: http://127.0.0.1:8080/vnc.html
+Password: $(cat /run/vncpass-raw)\" | boxes -a jc -d whirly -p h4t1"
