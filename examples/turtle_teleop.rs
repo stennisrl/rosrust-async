@@ -230,7 +230,7 @@ async fn main() -> anyhow::Result<()> {
 
                             Button::LeftTrigger => {
                                 pen_updated = true;
-                                if state.pen.width < MIN_PEN_WIDTH {
+                                if state.pen.width > MIN_PEN_WIDTH {
                                     state.pen.width -= 1;
 
                                     info!("Decreased pen width to {}", state.pen.width);
