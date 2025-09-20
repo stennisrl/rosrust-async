@@ -103,7 +103,7 @@
         url += '/' + path;
 
         rfb = new RFB(document.getElementById('screen'), url,
-            { credentials: { password: password }, compressionLevel: 0, qualityLevel: 9 });
+            { credentials: { password: password }});
 
         rfb.addEventListener("connect", connectedToServer);
         rfb.addEventListener("disconnect", disconnectedFromServer);
@@ -112,6 +112,8 @@
 
         rfb.viewOnly = true;
         rfb.scaleViewport = true;
+        rbf.qualityLevel = 9;
+        rbf.compressionLevel = 0;
     </script>
 </head>
 
