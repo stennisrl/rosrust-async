@@ -9,9 +9,9 @@ services:
     healthcheck:
       test: "bash -c 'source /opt/ros/noetic/setup.bash && rostopic list || exit 1'"
       interval: 1s
-      retries: 5
-      start_period: 1s
-      timeout: 10s
+      retries: 3
+      start_period: 0s
+      timeout: 5s
 
   turtlesim:
     build:
