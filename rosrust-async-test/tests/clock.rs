@@ -9,6 +9,8 @@ mod util;
 
 use util::setup;
 
+use crate::util::wait_for_subscriber_connections;
+
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 pub async fn sleep_and_wake() {
     let (node, _guard) = setup().await;
@@ -57,6 +59,8 @@ pub async fn multi_sleep() {
         .unwrap();
 
     let clock = Clock::new(&node).await.unwrap();
+
+    wait_for_subscriber_connections(&node, "/clock", 1, Duration::from_secs(5)).await;
 
     for duration in sleep_durations {
         let clock = clock.clone();
