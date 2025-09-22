@@ -56,7 +56,7 @@ use anyhow::{anyhow, bail};
 use gilrs::{Axis, Button, Event, EventType, Gilrs};
 use rand::Rng;
 use tokio::signal;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use tracing_subscriber::EnvFilter;
 
 rosrust::rosmsg_include!(
@@ -74,7 +74,7 @@ use crate::{
 
 use rosrust_async::{builder::NodeBuilder, Node, NodeError};
 
-const STICK_DEADZONE: f32 = 0.1;
+const DEADZONE: f32 = 0.1;
 const SCALE: f32 = 6.0;
 const MIN_PEN_WIDTH: u8 = 1;
 const MAX_PEN_WIDTH: u8 = 30;
@@ -84,21 +84,44 @@ const BACKGROUND_R_PARAM: &str = "/turtlesim/background_r";
 const BACKGROUND_G_PARAM: &str = "/turtlesim/background_g";
 const BACKGROUND_B_PARAM: &str = "/turtlesim/background_b";
 
-#[derive(Default, Debug, Clone, PartialEq)]
-struct TeleopState {
-    pen: SetPenReq,
-    ly: f32,
-    rx: f32,
+#[derive(Debug, Clone, PartialEq)]
+struct PenState {
+    r: u8,
+    g: u8,
+    b: u8,
+    width: u8,
+    enabled: bool,
 }
 
-impl TeleopState {
-    fn set_pen_active(&mut self, active: bool) {
-        self.pen.off = if active { 0 } else { 1 }
+impl Default for PenState {
+    fn default() -> Self {
+        Self {
+            r: 187,
+            g: 187,
+            b: 191,
+            width: MIN_PEN_WIDTH,
+            enabled: false,
+        }
     }
+}
 
-    fn is_pen_active(&self) -> bool {
-        self.pen.off.clamp(0, 1) < 1
+impl PenState {
+    fn as_request(&self) -> SetPenReq {
+        SetPenReq {
+            r: self.r,
+            g: self.g,
+            b: self.b,
+            width: self.width,
+            off: if self.enabled { 0 } else { 1 },
+        }
     }
+}
+
+#[derive(Default, Debug, Clone, PartialEq)]
+struct TeleopState {
+    pen: PenState,
+    ly: f32,
+    rx: f32,
 }
 
 /// Sets the background color of the turtlesim.
@@ -114,7 +137,8 @@ async fn set_background(node: &Node, r: u8, g: u8, b: u8) -> Result<(), NodeErro
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt().without_time()
+    tracing_subscriber::fmt()
+        .without_time()
         .with_env_filter(EnvFilter::from_default_env().add_directive("turtle_teleop=info".parse()?))
         .init();
 
@@ -143,22 +167,13 @@ async fn main() -> anyhow::Result<()> {
         .service_client::<SetPen>("/turtle1/set_pen", true)
         .await?;
 
-    let mut state = TeleopState {
-        pen: SetPenReq {
-            r: 187,
-            g: 187,
-            b: 191,
-            width: MIN_PEN_WIDTH,
-            off: 1,
-        },
-        ..Default::default()
-    };
+    let mut state = TeleopState::default();
 
     set_background(&node, 69, 86, 255).await?;
 
     // Reset the sim and set our initial pen state
     reset_sim.call(&EmptyReq {}).await?;
-    set_pen.call(&state.pen).await?;
+    set_pen.call(&state.pen.as_request()).await?;
 
     info!("Teleop is now active, press CTRL+C to exit.");
     let mut update_interval = tokio::time::interval(Duration::from_millis(10));
@@ -168,7 +183,7 @@ async fn main() -> anyhow::Result<()> {
             _ = update_interval.tick() => {
 
                 let mut pen_updated = false;
-                let mut teleop_updated = false;
+                let mut velocity_updated = false;
 
                 while let Some(Event { id, event, .. }) = gilrs.next_event() {
                     // Ignore events from other gamepads
@@ -177,15 +192,27 @@ async fn main() -> anyhow::Result<()> {
                     }
 
                     match event {
+                        EventType::Disconnected => {
+                            warn!("Gamepad disconnected");
+                            velocity_updated = true;
+                            pen_updated = true;
+
+                            state.pen.enabled = false;
+                            state.ly = 0.0;
+                            state.rx = 0.0;
+                        }
+                        EventType::Connected => {
+                            info!("Gamepad connected");
+                        }
                         EventType::AxisChanged(axis, value, _) => match axis {
                             Axis::LeftStickY => {
-                                teleop_updated = true;
-                                state.ly = value.abs().gt(&STICK_DEADZONE).then(|| value).unwrap_or(0.0);
+                                velocity_updated = true;
+                                state.ly = value.abs().gt(&DEADZONE).then(|| value).unwrap_or(0.0);
                             },
 
                             Axis::RightStickX => {
-                                teleop_updated = true;
-                                state.rx = value.abs().gt(&STICK_DEADZONE).then(|| -value).unwrap_or(0.0);
+                                velocity_updated = true;
+                                state.rx = value.abs().gt(&DEADZONE).then(|| -value).unwrap_or(0.0);
                             },
 
                             _ => { },
@@ -217,20 +244,18 @@ async fn main() -> anyhow::Result<()> {
 
                             Button::South => {
                                 pen_updated = true;
-                                let pen_active = !state.is_pen_active();
+                                state.pen.enabled = !state.pen.enabled;
 
-                                if pen_active{
+                                if state.pen.enabled{
                                     info!("Enabled pen");
                                 } else {
                                     info!("Disabled pen");
                                 }
-
-                                state.set_pen_active(pen_active);
                             },
 
                             Button::LeftTrigger => {
-                                pen_updated = true;
                                 if state.pen.width > MIN_PEN_WIDTH {
+                                    pen_updated = true;
                                     state.pen.width -= 1;
 
                                     info!("Decreased pen width to {}", state.pen.width);
@@ -240,8 +265,8 @@ async fn main() -> anyhow::Result<()> {
                             },
 
                             Button::RightTrigger => {
-                                pen_updated = true;
                                 if state.pen.width < MAX_PEN_WIDTH {
+                                    pen_updated = true;
                                     state.pen.width += 1;
 
                                     info!("Increased pen width to {}", state.pen.width);
@@ -255,8 +280,7 @@ async fn main() -> anyhow::Result<()> {
 
                         _ => { },
                     }
-
-                }
+                }   
 
                 // Gilrs only sends axis updates when a change is detected, so if a user pushes a stick into
                 // the hard-stop or manages to hold it at one specific position, no additional updates will be sent.
@@ -264,10 +288,10 @@ async fn main() -> anyhow::Result<()> {
                 let is_moving = state.ly != 0.0 ||  state.rx != 0.0;
 
                 if pen_updated {
-                    set_pen.call(&state.pen).await?;
+                    set_pen.call(&state.pen.as_request()).await?;
                 }
 
-                if teleop_updated | is_moving {
+                if velocity_updated | is_moving {
                     let turtle_direction = Twist {
                         linear: Vector3 {
                             x: (state.ly * SCALE) as f64,
@@ -286,6 +310,15 @@ async fn main() -> anyhow::Result<()> {
                 match handler_result {
                     Ok(_) => info!("Ctrl+C detected, exiting."),
                     Err(e) => error!("Failed to install signal handler: {e}"),
+                }
+
+                break;
+            }
+
+            shutdown_reason = node.shutdown_complete() => {
+                match shutdown_reason{
+                    Some(reason) => info!("Node was shut down with reason: \"{reason}\""),
+                    None => info!("Node was shut down with no reason provided"),
                 }
 
                 break;
