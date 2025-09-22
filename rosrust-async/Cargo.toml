@@ -1,6 +1,6 @@
 [package]
 name = "rosrust_async"
-version = "0.1.0"
+version = "0.2.0"
 rust-version = "1.82.0"
 authors = ["stennisrl <22553541+stennisrl@users.noreply.github.com>"]
 description = "A native ROS1 client implementation in async Rust."

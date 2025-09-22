@@ -31,7 +31,7 @@ The [`turtle_teleop`](turtle_teleop.rs) example allows a user to draw images wit
 
 This is a more complete example that utilizes a mix of publishers, service clients, and parameter server operations.
 
-A containerized [turtlesim](turtlesim/docker-compose.yml) is included for those who want to try things out without needing a full ROS installation. Unlike the other examples, this one is entirely self-sufficient - the compose config will create a dedicated ROS Master container alongisde the turtlesim container, so the steps under "Getting Started" do not apply here.
+A containerized [turtlesim](turtlesim/docker-compose.yml) is included for those who want to try things out without needing a full ROS installation. Unlike the other examples, this one is entirely self-sufficient - the compose config will create a dedicated ROS Master container alongside the turtlesim container, so the steps under "Getting Started" do not apply here.
 
 <table align="center" width=100%>
   <tbody>
