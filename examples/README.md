@@ -38,14 +38,14 @@ A containerized [turtlesim](turtlesim/docker-compose.yml) is provided for those 
   <tbody>
     <tr>
         <td align="center" width="50%">
-            <img src="./assets/turtlesim-flower.png">
+            <img src="./assets/turtlesim-flower.png" width="100%">
             <br>
-            <i>todo</i>
+            <i>A photorealistic drawing of a flower, made using the teleop example.</i>
         </td>
         <td align="center" width="50%">
-            <img src="./assets/turtlesim-s.png">
+            <img src="./assets/example-turtlesim.svg" width="100%">
             <br>
-            <i>Stodo</i>
+            <i>Teleop example & the containerized turtlesim running in tandem</i>
         </td>
     </tr>
   </tbody>
@@ -64,21 +64,21 @@ Refer to the comments inside each of the examples for more information.
   <tbody>
     <tr>
         <td align="center" width="50%">
-            <img src="./assets/example-pubsub.svg">
-            <br>
-            <i>Publisher & Subscriber examples running in tandem</i>
-        </td>
-        <td align="center" width="50%">
-            <img src="./assets/example-pub-rostopic.svg">
+            <img src="./assets/example-pub-rostopic.svg" width="100%">
             <br>
             <i>Publisher example interacting with the rostopic CLI tool</i>
+        </td>
+        <td align="center" width="50%">
+            <img src="./assets/example-sub-rostopic.svg" width="100%">
+            <br>
+            <i>Subscriber example interacting with the rostopic CLI tool</i>
         </td>
     </tr>
     <tr>
         <td align="center" width="50%">
-            <img src="./assets/example-sub-rostopic.svg">
+            <img src="./assets/example-pubsub.svg" width="100%">
             <br>
-            <i>Subscriber example interacting with the rostopic CLI tool</i>
+            <i>Publisher & Subscriber examples running in tandem</i>
         </td>
     </tr>
   </tbody>

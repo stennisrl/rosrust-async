@@ -114,7 +114,7 @@ async fn set_background(node: &Node, r: u8, g: u8, b: u8) -> Result<(), NodeErro
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt()
+    tracing_subscriber::fmt().without_time()
         .with_env_filter(EnvFilter::from_default_env().add_directive("turtle_teleop=info".parse()?))
         .init();
 
