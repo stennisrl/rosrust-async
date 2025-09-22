@@ -34,19 +34,21 @@ The [`turtle_teleop`](turtle_teleop.rs) example uses inputs from a gamepad to co
 
 
 A containerized [turtlesim](turtlesim/docker-compose.yml) is provided for those without a local ROS1 installation. Refer to the comments inside this example for more information.
-<table>
+<table align="center">
   <tbody>
     <tr>
-        <td align="center" width="50%">
-            <img src="./assets/turtlesim-flower.png" width="100%">
-            <br>
-            <i>A photorealistic drawing of a flower, made using the teleop example.</i>
-        </td>
-        <td align="center" width="50%">
-            <img src="./assets/example-turtlesim.svg" width="100%">
-            <br>
-            <i>Teleop example & the containerized turtlesim running in tandem</i>
-        </td>
+      <td align="center" width="50%">
+        <img src="./assets/turtlesim-flower.png" width="100%">
+        <br>
+        <i>A photorealistic drawing of a flower, made using the teleop example.</i>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" width="50%">
+        <img src="./assets/example-turtlesim.svg" width="100%">
+        <br>
+        <i>Teleop example & the containerized turtlesim running in tandem</i>
+      </td>
     </tr>
   </tbody>
 </table>
@@ -60,26 +62,28 @@ Both the [`subscriber`](subscriber.rs) & [`subscriber_callback`](subscriber_call
 Since these examples use the standard `String` message, you can also use the `rostopic` CLI tool to interact with them. 
 Refer to the comments inside each of the examples for more information.
 
-<table>
+<table align="center">
   <tbody>
     <tr>
-        <td align="center" width="50%">
-            <img src="./assets/example-pub-rostopic.svg" width="100%">
-            <br>
-            <i>Publisher example interacting with the rostopic CLI tool</i>
-        </td>
-        <td align="center" width="50%">
-            <img src="./assets/example-sub-rostopic.svg" width="100%">
-            <br>
-            <i>Subscriber example interacting with the rostopic CLI tool</i>
-        </td>
+      <td align="center" width="50%">
+        <img src="./assets/example-pub-rostopic.svg" width="100%">
+        <br>
+        <i>Publisher example interacting with the rostopic CLI tool</i>
+      </td>
     </tr>
     <tr>
-        <td align="center" width="50%">
-            <img src="./assets/example-pubsub.svg" width="100%">
-            <br>
-            <i>Publisher & Subscriber examples running in tandem</i>
-        </td>
+      <td align="center" width="50%">
+        <img src="./assets/example-sub-rostopic.svg" width="100%">
+        <br>
+        <i>Subscriber example interacting with the rostopic CLI tool</i>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" width="50%">
+        <img src="./assets/example-pubsub.svg" width="100%">
+        <br>
+        <i>Publisher & Subscriber examples running in tandem</i>
+      </td>
     </tr>
   </tbody>
 </table>
@@ -94,14 +98,14 @@ The [`service_server`](service_server.rs) example is what actually provides the 
 This pair of examples relies on the [`TwoInts`](std_msgs/srv/TwoInts.srv) service description.
 
 
-<table>
+<table align="center">
   <tbody>
     <tr>
-        <td align="center" width="50%">
-            <img src="./assets/example-svcpair.svg">
-            <br>
-            <i>Service Client & Service Server examples running in tandem</i>
-        </td>
+      <td align="center" width="50%">
+        <img src="./assets/example-svcpair.svg">
+        <br>
+        <i>Service Client & Service Server examples running in tandem</i>
+      </td>
     </tr>
   </tbody>
 </table>
