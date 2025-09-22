@@ -1,0 +1,30 @@
+
+services:
+  ros-master:
+    image: ros:noetic-ros-base
+    container_name: ros-master
+    command: roscore
+    ports:
+      - "11311:11311"
+    healthcheck:
+      test: "bash -c 'source /opt/ros/noetic/setup.bash && rostopic list || exit 1'"
+      interval: 1s
+      retries: 3
+      start_period: 0s
+      timeout: 5s
+
+  turtlesim:
+    build:
+      dockerfile: turtlesim.dockerfile
+      context: ./
+    container_name: turtlesim
+    depends_on:
+      ros-master:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      - ROS_MASTER_URI=http://ros-master:11311
+
+
+

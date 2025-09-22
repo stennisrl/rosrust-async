@@ -1,0 +1,5 @@
+#!/command/with-contenv bash
+
+exec /usr/bin/novnc_proxy --listen ${NOVNC_LISTEN_PORT} \
+                          --vnc localhost:${VNC_LISTEN_PORT} \
+                          --file-only  > /dev/null 2>&1

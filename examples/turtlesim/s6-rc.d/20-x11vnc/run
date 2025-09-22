@@ -1,0 +1,12 @@
+#!/command/with-contenv bash
+
+exec x11vnc -display :0 \
+            -forever \
+            -noxdamage \
+            -nodpms \
+            -defer 0 \
+            -wait 1 \
+            -sb 0 \
+            -localhost \
+            -rfbauth /run/vncpass \
+            -rfbport ${VNC_LISTEN_PORT} > /dev/null 2>&1

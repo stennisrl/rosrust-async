@@ -1,0 +1,4 @@
+#!/command/with-contenv bash
+
+source /opt/ros/$(rosversion -d)/setup.bash
+rosrun turtlesim turtlesim_node __ip:=$(hostname -i)
