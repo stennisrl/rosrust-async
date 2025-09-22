@@ -1,7 +1,5 @@
 #!/command/with-contenv bash
 
-export VNC_LISTEN_PORT=5900
-
 exec x11vnc -display :0 \
             -forever \
             -noxdamage \

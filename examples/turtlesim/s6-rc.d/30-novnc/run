@@ -1,5 +1,5 @@
 #!/command/with-contenv bash
 
-export NOVNC_LISTEN_PORT=8080
-export VNC_LISTEN_PORT=5900
-exec /usr/bin/novnc_proxy --listen ${NOVNC_LISTEN_PORT} --vnc localhost:${VNC_LISTEN_PORT} --file-only  > /dev/null 2>&1
+exec /usr/bin/novnc_proxy --listen ${NOVNC_LISTEN_PORT} \
+                          --vnc localhost:${VNC_LISTEN_PORT} \
+                          --file-only  > /dev/null 2>&1

@@ -1,7 +1,11 @@
 #!/command/execlineb -P
 
 foreground {
-    bash -c "VNC_PASSWORD=$(pwgen -vcnsB 16 1) && \
+    bash -c "
+            echo -n '5900' > /run/s6/container_environment/VNC_LISTEN_PORT && \
+            echo -n '8080' > /run/s6/container_environment/NOVNC_LISTEN_PORT && \
+            echo -n ':0' > /run/s6/container_environment/DISPLAY && \
+            VNC_PASSWORD=$(pwgen -vcnsB 16 1) && \
             echo $VNC_PASSWORD > /run/vncpass-raw && \
             x11vnc -storepasswd $VNC_PASSWORD /run/vncpass
         "
