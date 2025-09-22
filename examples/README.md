@@ -27,9 +27,12 @@ Or, if you don't want to use docker's [host network driver](https://docs.docker.
 
 ## Included Examples
 ### Turtlesim Teleop
-The [`turtle_teleop`](turtle_teleop.rs) example uses inputs from a gamepad to control a [turtlesim](https://wiki.ros.org/turtlesim) node.
+The [`turtle_teleop`](turtle_teleop.rs) example allows a user to draw images with a [turtlesim](https://wiki.ros.org/turtlesim) node.
+
+This is a more complete example that utilizes a mix of publishers, service clients, and parameter server operations.
 
 A containerized [turtlesim](turtlesim/docker-compose.yml) is included for those who want to try things out without needing a full ROS installation. Unlike the other examples, this one is entirely self-sufficient - the compose config will create a dedicated ROS Master container alongisde the turtlesim container, so the steps under "Getting Started" do not apply here.
+
 <table align="center" width=100%>
   <tbody>
     <tr>
@@ -43,7 +46,7 @@ A containerized [turtlesim](turtlesim/docker-compose.yml) is included for those 
       <td align="center">
         <img src="./assets/example-turtlesim.svg">
         <br>
-        <i>Teleop example & the containerized turtlesim running in tandem</i>
+        <i>Teleop example & the containerized turtlesim running together</i>
       </td>
     </tr>
   </tbody>
@@ -78,7 +81,7 @@ Refer to the comments inside each of the examples for more information.
       <td align="center">
         <img src="./assets/example-pubsub.svg">
         <br>
-        <i>Publisher & Subscriber examples running in tandem</i>
+        <i>Publisher & Subscriber examples running together</i>
       </td>
     </tr>
   </tbody>
@@ -100,7 +103,7 @@ This pair of examples relies on the [`TwoInts`](std_msgs/srv/TwoInts.srv) servic
       <td align="center">
         <img src="./assets/example-svcpair.svg">
         <br>
-        <i>Service Client & Service Server examples running in tandem</i>
+        <i>Service Client & Service Server examples running together</i>
       </td>
     </tr>
   </tbody>
