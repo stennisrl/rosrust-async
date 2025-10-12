@@ -1,4 +1,6 @@
-use rosrust_async::xmlrpc::RosSlaveClient;
+use std::collections::HashMap;
+
+use rosrust_async::{builder::NodeBuilder, xmlrpc::RosSlaveClient};
 
 mod util;
 use util::setup;
@@ -10,7 +12,7 @@ pub async fn set_get_delete() {
 
     assert!(
         node.has_param("/test_param").await.unwrap(),
-        "Parameter was not created/set"
+        "Parameter was not created"
     );
 
     assert_eq!(
@@ -55,6 +57,12 @@ pub async fn cache_gets_updated() {
     let node_client = RosSlaveClient::new(node.url(), "/node_client");
     let param_value = String::from("Hello, world!");
 
+    assert!(node
+        .get_param_cached::<String>("/test_param")
+        .await
+        .unwrap()
+        .is_none());
+
     // Inform the node that our param of interest was modified,
     // even though it does not actually exist on the parameter server.
     // This will store `test_param` in the node's param cache.
@@ -69,4 +77,37 @@ pub async fn cache_gets_updated() {
             .unwrap(),
         Some(param_value)
     )
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+pub async fn empty_map_doesnt_invalidate_cache() {
+    let (node, _guard) = setup().await;
+    let second_node = NodeBuilder::new()
+        .name("/second_node")
+        .master_url(node.master_url().to_string())
+        .build()
+        .await
+        .unwrap();
+
+    let empty_map = HashMap::<String, String>::new();
+
+    assert!(
+        node.get_param_cached::<String>("/test_param")
+            .await
+            .unwrap()
+            .is_none(),
+        "Param exists when it should not"
+    );
+
+    second_node
+        .set_param("/test_param", &empty_map)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        node.get_param_cached("/test_param").await.unwrap(),
+        Some(empty_map)
+    );
+
+    node.shutdown_and_wait(None).await.unwrap();
 }

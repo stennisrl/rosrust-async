@@ -172,14 +172,14 @@ impl PublisherActor {
         guard: Weak<PublisherGuard>,
         publication: Publication,
     ) -> PublisherActorResult<()> {
+        let topic_name = publication.topic().name.clone();
+        trace!("Cleaning up publication for topic \"{topic_name}\"");
+
         if let Some(guard) = guard.upgrade() {
             guard.disarm();
         }
 
-        state
-            .master_client
-            .unregister_publisher(&publication.topic().name)
-            .await?;
+        state.master_client.unregister_publisher(&topic_name).await?;
         Ok(())
     }
 

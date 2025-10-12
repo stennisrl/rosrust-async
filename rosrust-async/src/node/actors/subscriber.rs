@@ -169,7 +169,6 @@ impl SubscriberActor {
         subscription: Subscription,
     ) -> SubscriberActorResult<()> {
         let topic_name = subscription.topic().name.clone();
-
         trace!("Cleaning up subscription for topic \"{topic_name}\"");
 
         if let Some(guard) = guard.upgrade() {

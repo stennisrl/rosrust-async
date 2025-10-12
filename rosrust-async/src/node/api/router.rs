@@ -15,9 +15,8 @@ use crate::node::{
     api::{
         get_params,
         handler::{Handler, HandlerResponse, HandlerResult},
-        invalid_request,
         server::RouteBuilder,
-        server_error,
+        ApiError,
     },
     NodeState,
 };
@@ -82,7 +81,7 @@ impl Handler for GetBusStatsHandler {
         let caller_id: String = get_params(params)?;
 
         warn!("getBusStats XML-RPC method is not implemented: [caller_id: {caller_id}]");
-        Err(server_error("getBusStats not implemented!").into())
+        Err(ApiError::server_error("getBusStats not implemented!").into())
     }
 }
 
@@ -95,7 +94,7 @@ impl Handler for GetBusInfoHandler {
         let caller_id: String = get_params(params)?;
 
         warn!("getBusInfo XML-RPC method is not implemented: [caller_id: {caller_id}]");
-        Err(server_error("getBusInfo not implemented!").into())
+        Err(ApiError::server_error("getBusInfo not implemented!").into())
     }
 }
 
@@ -174,7 +173,7 @@ impl Handler for GetSubscriptionsHandler {
         let subscriptions = call!(self.sub_actor, |reply| {
             SubscriberActorMsg::GetSubscriptions { reply }
         })
-        .map_err(|e| server_error(format!("Failed to get subscriptions: {e}")))?;
+        .map_err(|e| ApiError::server_error(format!("Failed to get subscriptions: {e}")))?;
 
         Ok(HandlerResponse::new(
             "List of subscriptions",
@@ -198,7 +197,7 @@ impl Handler for GetPublicationsHandler {
         let publications = call!(self.pub_actor, |reply| {
             PublisherActorMsg::GetPublications { reply }
         })
-        .map_err(|e| server_error(format!("Failed to get publications: {e}")))?;
+        .map_err(|e| ApiError::server_error(format!("Failed to get publications: {e}")))?;
 
         Ok(HandlerResponse::new("List of publications", publications)?)
     }
@@ -215,16 +214,15 @@ impl Handler for ParamUpdateHandler {
     async fn handle(&self, params: &[Value], _headers: HeaderMap) -> HandlerResult {
         let (caller_id, param_name, new_value) = get_params::<ParamUpdateParams>(params)?;
 
-        trace!("paramUpdate XML-RPC method called: [caller_id: {caller_id}, param_name: \"{param_name}\"");
+        trace!("paramUpdate XML-RPC method called: [caller_id: {caller_id}, param_name: \"{param_name}\"]");
 
-        call!(self.param_actor, |reply| {
+        cast!(self.param_actor, {
             ParameterActorMsg::UpdateCachedParam {
                 name: param_name,
                 value: new_value,
-                reply,
             }
         })
-        .map_err(|e| server_error(format!("Failed to update parameter: {e}")))?;
+        .map_err(|e| ApiError::server_error(format!("Failed to update parameter: {e}")))?;
 
         Ok(HandlerResponse::new("Parameter updated", 0)?)
     }
@@ -250,7 +248,9 @@ impl Handler for PublisherUpdateHandler {
                 publishers: BTreeSet::from_iter(publishers),
             }
         )
-        .map_err(|e| server_error(format!("Failed to update connected publishers: {e}")))?;
+        .map_err(|e| {
+            ApiError::server_error(format!("Failed to update connected publishers: {e}"))
+        })?;
 
         Ok(HandlerResponse::new("Publishers updated", 0)?)
     }
@@ -275,7 +275,7 @@ impl Handler for RequestTopicHandler {
                 reply,
             }
         })
-        .map_err(|e| server_error(format!("Failed to set up publisher channel: {e}")))?;
+        .map_err(|e| ApiError::server_error(format!("Failed to set up publisher channel: {e}")))?;
 
         match publisher_addr {
             Some(address) => {
@@ -291,7 +291,7 @@ impl Handler for RequestTopicHandler {
                     ("TCPROS", self.hostname.clone(), address.port() as i32),
                 )?)
             }
-            None => Err(invalid_request(format!(
+            None => Err(ApiError::invalid_request(format!(
                 "Node is not currently publishing to topic \"{topic_name}\"",
             ))
             .into()),

@@ -168,7 +168,6 @@ impl ServiceActor {
         server: ServiceProvider,
     ) -> ServiceActorResult<()> {
         let service_name = server.service().name.clone();
-
         trace!("Cleaning up server for service \"{service_name}\"");
 
         if let Some(guard) = guard.upgrade() {
