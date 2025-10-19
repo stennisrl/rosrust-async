@@ -9,6 +9,8 @@ use tracing::{instrument, trace, warn};
 
 use crate::xmlrpc::{MasterClientError, RosMasterClient};
 
+// This is a little hacky, the tl;dr is that dxr's Value does not
+// expose the structure constructor so we have to do some extra work.
 const EMPTY_STRUCT: LazyLock<Value> = LazyLock::new(|| {
     HashMap::<String, String>::new()
         .try_to_value()
@@ -281,13 +283,17 @@ impl ParameterActor {
         trace!("UpdateCachedParam called");
 
         if state.subscribed_params.contains(&param_name) {
-            if value == *EMPTY_STRUCT || state.master_client.has_param(&param_name).await? {
+            /*
+                When a parameter is deleted, the ROS Master notifies
+                all subscribers via the paramUpdate method using an
+                empty struct as the value. To avoid caching this, empty
+                structs trigger an additional check with the ROS Master
+            */
+            if value != *EMPTY_STRUCT || state.master_client.has_param(&param_name).await? {
                 trace!("Updating parameter cache");
-
                 state.param_cache.insert(param_name, value);
             } else {
                 trace!("Parameter was deleted, removing from cache");
-
                 state.param_cache.remove(&param_name);
             }
         } else {

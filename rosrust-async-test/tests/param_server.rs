@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use rosrust_async::{builder::NodeBuilder, xmlrpc::RosSlaveClient, NodeError};
+use rosrust_async::{builder::NodeBuilder, xmlrpc::RosSlaveClient};
 
 mod util;
 use util::setup;
