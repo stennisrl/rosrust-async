@@ -1,12 +1,10 @@
-mod util;
-
 use rosrust_async::{node::ServiceActorError, NodeError};
+
+mod util;
 use util::{
-    msg::{DudService, TwoInts},
+    msg::{DudService, TwoInts, TwoIntsRes},
     setup,
 };
-
-use crate::util::msg::TwoIntsRes;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 pub async fn second_client_fails_on_mismatch() {
@@ -67,8 +65,9 @@ pub async fn server_drop_guard() {
 
     drop(server);
 
-    assert!(
-        node.get_services().await.unwrap().is_empty(),
-        "Service guard did not clean up server"
+    assert_eq!(
+        node.get_services().await.unwrap().len(),
+        0,
+        "Service drop guard did not clean up ServiceProvider"
     );
 }

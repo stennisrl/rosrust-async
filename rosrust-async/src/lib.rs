@@ -5,12 +5,12 @@
 //! The `rosrust-async` crate provides a Rust-based implementation of a ROS1 client library that is designed to be used in asynchronous applications.
 //!
 //! ## Constructing a Node
-//! A [Node] can be constructed either with [Node::new](crate::node::Node#method.new), or with a [NodeBuilder](crate::node::builder::NodeBuilder) instance. 
+//! A [Node] can be constructed either with [Node::new](crate::node::Node#method.new), or with a [NodeBuilder](crate::builder::NodeBuilder) instance. 
 //! The latter provides a clean way of constructing a `Node`, complete with automatic resolution of various parameters such as the ROS master URI and system hostname.
 //! `NodeBuilder` has a number of functions that allow for overriding these values:
 //!
 //! ```rust
-//!     use rosrust_async::node::builder::NodeBuilder;
+//!     use rosrust_async::builder::NodeBuilder;
 //!     
 //! #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 //!     async fn main(){
@@ -59,7 +59,7 @@
 //!
 //! ```rust
 //!
-//! use rosrust_async::node::builder::NodeBuilder;
+//! use rosrust_async::builder::NodeBuilder;
 //!
 //! #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 //! async fn main(){
@@ -91,7 +91,7 @@
 //! Enabling the `tcp_nodelay` argument will request the publisher set TCP_NODELAY on the socket if possible.
 //!
 //! ```rust, no_run
-//! use rosrust_async::node::builder::NodeBuilder;
+//! use rosrust_async::builder::NodeBuilder;
 //!
 //! #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 //! async fn main(){
@@ -117,7 +117,7 @@
 //! This function returns both a handle to the underlying task as well as a cancellation token which can be used to manage the task's lifecycle.
 //!
 //! ```rust, no_run
-//!  use rosrust_async::node::builder::NodeBuilder;
+//!  use rosrust_async::builder::NodeBuilder;
 //!
 //!  #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 //!  async fn main(){

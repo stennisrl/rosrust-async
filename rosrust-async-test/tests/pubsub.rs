@@ -6,19 +6,14 @@ use std::{
     time::Duration,
 };
 
-use rosrust_async::node::builder::NodeBuilder;
+use rosrust_async::builder::NodeBuilder;
 
 mod util;
-use util::{msg::RosString, setup, wait_for_subscriber_connections};
-
-use crate::util::{
-    wait_until,
-};
+use util::{msg::RosString, setup, wait_for_subscriber_connections, wait_until};
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-pub async fn publish_to_inline_subscriber() {
+pub async fn pub_sub() {
     let (node, _guard) = setup().await;
-
     let second_node = NodeBuilder::new()
         .master_url(node.master_url().clone())
         .name("/rosrust_async_2")
@@ -38,11 +33,11 @@ pub async fn publish_to_inline_subscriber() {
 
     wait_for_subscriber_connections(&node, "/chatter", 1, Duration::from_secs(5)).await;
 
-    util::test_pubsub(publisher, subscriber, 5).await;
+    util::test_pubsub(publisher, subscriber).await;
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-pub async fn publish_loopback() {
+pub async fn pub_sub_loopback() {
     let (node, _guard) = setup().await;
 
     let publisher = node
@@ -57,23 +52,23 @@ pub async fn publish_loopback() {
 
     wait_for_subscriber_connections(&node, "/chatter", 1, Duration::from_secs(5)).await;
 
-    util::test_pubsub(publisher, subscriber, 5).await;
+    util::test_pubsub(publisher, subscriber).await;
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 pub async fn subscriber_gets_latched_msg() {
-    let (node, _guardc) = setup().await;
+    let (node, _guard) = setup().await;
+
+    let message = RosString {
+        data: String::from("Hello, world!"),
+    };
 
     let publisher = node
         .publish::<RosString>("/latch_test", 5, true, false)
         .await
         .unwrap();
 
-    publisher
-        .send(&RosString {
-            data: String::from("cool beans"),
-        })
-        .unwrap();
+    publisher.send(&message).unwrap();
 
     let mut subscriber = node
         .subscribe::<RosString>("/latch_test", 5, false)
@@ -85,10 +80,7 @@ pub async fn subscriber_gets_latched_msg() {
         .expect("Timed out waiting for latched message")
         .unwrap();
 
-    assert_eq!(
-        latched_msg.data, "cool beans",
-        "Latched message did not match"
-    );
+    assert_eq!(latched_msg, message, "Latched message did not match");
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
@@ -132,10 +124,11 @@ pub async fn publish_to_multiple_subscribers() {
     wait_for_subscriber_connections(&node, "/chatter", NUM_SUBSCRIBERS, Duration::from_secs(5))
         .await;
 
-    let mut message = RosString::default();
-    message.data = "Hello, world!".to_string();
-
-    publisher.send(&message).unwrap();
+    publisher
+        .send(&RosString {
+            data: String::from("Hello, world!"),
+        })
+        .unwrap();
 
     tokio::time::timeout(
         Duration::from_secs(5),
@@ -149,6 +142,10 @@ pub async fn publish_to_multiple_subscribers() {
         }),
     )
     .await
-    .expect("Timed out waiting for subscriber messages")
+    .expect(&format!(
+        "Timed out waiting for subscribers to check in, {} of {} completed",
+        rx_message_count.load(Ordering::Acquire),
+        NUM_SUBSCRIBERS
+    ))
     .unwrap();
 }

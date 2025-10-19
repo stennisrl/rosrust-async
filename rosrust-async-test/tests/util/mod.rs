@@ -1,3 +1,4 @@
+use ros_core_rs::core::Master;
 use std::{
     future::Future,
     net::{Ipv4Addr, SocketAddrV4},
@@ -7,7 +8,6 @@ use std::{
 use tokio::{net::TcpListener, sync::mpsc::UnboundedReceiver};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::EnvFilter;
-use ros_core_rs::core::Master;
 use url::Url;
 
 use rosrust::Publisher;
@@ -20,9 +20,7 @@ use rosrust_async::{
 };
 
 pub mod msg;
-use msg::RosString;
-
-use crate::util::msg::{TwoInts, TwoIntsReq};
+use msg::{RosString, TwoInts, TwoIntsReq};
 
 pub async fn setup() -> (Node, WorkerGuard) {
     if std::env::var("NEXTEST").is_err() {
@@ -83,7 +81,7 @@ where
     Fut: Future<Output = Result<Option<T>, NodeError>>,
 {
     let mut interval = tokio::time::interval(Duration::from_millis(250));
-    
+
     loop {
         if let Some(val) = condition().await? {
             return Ok(val);
@@ -153,7 +151,7 @@ pub async fn wait_for_publisher_connections(
 pub async fn test_sum(client: &TypedServiceClient<TwoInts>, a: i64, b: i64) {
     let sum = tokio::time::timeout(Duration::from_secs(5), client.call(&TwoIntsReq { a, b }))
         .await
-        .expect("Timed out waiting for RPC result")
+        .expect("Timed out waiting for RPC sum result")
         .unwrap()
         .sum;
 
@@ -173,7 +171,7 @@ pub trait MessageReceiver {
 }
 
 #[allow(dead_code)]
-pub async fn test_pubsub<P, S>(publisher: P, mut subscriber: S, iterations: usize)
+pub async fn test_pubsub<P, S>(publisher: P, mut subscriber: S)
 where
     P: MessageSender,
     S: MessageReceiver,
@@ -181,7 +179,7 @@ where
     let base_message = "Test message";
     let delimiter = ':';
 
-    for msg_id in 0..iterations {
+    for msg_id in 0..10 {
         let msg = RosString {
             data: format!("{base_message}{delimiter}{msg_id}"),
         };
@@ -191,21 +189,18 @@ where
         let recv_msg = tokio::time::timeout(Duration::from_secs(5), subscriber.recv_message())
             .await
             .expect("Timed out waiting for message")
-            .expect("Failed to recv message");
+            .unwrap();
 
         let (msg, id) = recv_msg
             .data
             .split_once(delimiter)
             .expect("Message did not contain delimiter");
 
-        assert_eq!(
-            msg, base_message,
-            "Message did not contain \"{base_message}\""
-        );
+        assert_eq!(msg, base_message, "Message did not contain base");
 
-        let recv_id: usize = id.parse().expect("Failed to parse message ID");
+        let parsed_id: usize = id.parse().expect("Failed to parse message ID");
 
-        assert_eq!(msg_id, recv_id, "Message IDs did not match");
+        assert_eq!(msg_id, parsed_id, "Message IDs did not match");
     }
 }
 
@@ -219,20 +214,20 @@ impl MessageSender for Publisher<RosString> {
 }
 
 #[async_trait::async_trait]
-impl MessageReceiver for UnboundedReceiver<RosString> {
-    type Error = RecvError;
-
-    async fn recv_message(&mut self) -> Result<RosString, Self::Error> {
-        self.recv().await.ok_or(RecvError)
-    }
-}
-
-#[async_trait::async_trait]
 impl MessageSender for TypedPublisher<RosString> {
     type Error = PublisherError;
 
     async fn send_message(&self, msg: &RosString) -> Result<(), Self::Error> {
         self.send(msg)
+    }
+}
+
+#[async_trait::async_trait]
+impl MessageReceiver for UnboundedReceiver<RosString> {
+    type Error = RecvError;
+
+    async fn recv_message(&mut self) -> Result<RosString, Self::Error> {
+        self.recv().await.ok_or(RecvError)
     }
 }
 

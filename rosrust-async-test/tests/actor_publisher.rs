@@ -1,8 +1,10 @@
-mod util;
 use rosrust_async::{node::PublisherActorError, NodeError};
-use util::{msg::RosString, setup};
 
-use crate::util::msg::TwoIntsReq;
+mod util;
+use util::{
+    msg::{RosString, TwoIntsReq},
+    setup,
+};
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 pub async fn publish_msg_mismatch() {
@@ -40,8 +42,9 @@ pub async fn publisher_drop_guard() {
 
     drop(publisher);
 
-    assert!(
-        node.get_publications().await.unwrap().is_empty(),
-        "Publisher guard did not clean up publication"
+    assert_eq!(
+        node.get_publications().await.unwrap().len(),
+        0,
+        "Publisher drop guard did not clean up Publication"
     );
 }

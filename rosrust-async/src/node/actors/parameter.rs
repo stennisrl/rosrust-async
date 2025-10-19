@@ -12,7 +12,7 @@ use crate::xmlrpc::{MasterClientError, RosMasterClient};
 const EMPTY_STRUCT: LazyLock<Value> = LazyLock::new(|| {
     HashMap::<String, String>::new()
         .try_to_value()
-        .expect("try_to_value is infallible for HashMap<String,String>")
+        .expect("try_to_value is infallible for HashMap<String, String>")
 });
 
 pub enum ParameterActorMsg {
@@ -97,7 +97,7 @@ impl Actor for ParameterActor {
         state: &mut Self::State,
     ) -> Result<(), ractor::ActorProcessingErr> {
         for param_name in std::mem::take(&mut state.subscribed_params) {
-            trace!("Unsubscribing from updates for param \"{param_name}\"");
+            trace!("Unsubscribing from updates for parameter \"{param_name}\"");
 
             if let Err(e) = state.master_client.unsubscribe_param(&param_name).await {
                 warn!("Failed to unsubscribe from parameter updates: {e}");
@@ -173,21 +173,23 @@ impl ParameterActor {
         if !state.subscribed_params.contains(&param_name) {
             trace!("Subscribing to parameter updates");
 
-            // Although subscribeParam does return the param's value if it exists,
-            // confusingly the API will return an empty map if not. We can't treat
-            // all empty maps as None, so we ignore the returned value and rely on
-            // getParam instead.
+            /*
+                Although subscribeParam returns the parameter's value if it exists,
+                the API will return an empty map if not. For the sake of simplicity
+                we discard the returned value and rely on getParam instead.
+            */
             state.master_client.subscribe_param_any(&param_name).await?;
             state.subscribed_params.insert(param_name.clone());
         }
 
-        match state.param_cache.entry(param_name.clone()) {
+        let value = match state.param_cache.entry(param_name.clone()) {
             Entry::Occupied(entry) => {
-                trace!("Parameter present in cache");
-                Ok(Some(entry.get().clone()))
+                trace!("Using cached parameter value");
+
+                Some(entry.get().clone())
             }
             Entry::Vacant(entry) => {
-                trace!("Parameter not present in cache");
+                trace!("Parameter not present in cache, fetching from server");
 
                 let param = state.master_client.get_param_any(&param_name).await?;
 
@@ -195,9 +197,11 @@ impl ParameterActor {
                     entry.insert(value.clone());
                 }
 
-                Ok(param)
+                param
             }
-        }
+        };
+
+        Ok(value)
     }
 
     #[instrument(skip(state, value))]
@@ -213,9 +217,8 @@ impl ParameterActor {
             .set_param_any(&param_name, &value)
             .await?;
 
-        // Only update local cache if we are subscribed to updates for the param
         if state.subscribed_params.contains(&param_name) {
-            trace!("Storing parameter in cache");
+            trace!("Storing parameter in local cache");
             state.param_cache.insert(param_name, value);
         }
 
@@ -229,13 +232,12 @@ impl ParameterActor {
     ) -> ParameterActorResult<()> {
         trace!("DeleteParam called");
 
-        state.master_client.delete_param(&param_name).await?;
-
         if state.subscribed_params.remove(&param_name) {
             trace!("Unsubscribing from parameter updates");
             state.master_client.unsubscribe_param(&param_name).await?;
         }
 
+        state.master_client.delete_param(&param_name).await?;
         state.param_cache.remove(&param_name);
 
         Ok(())
@@ -279,15 +281,12 @@ impl ParameterActor {
         trace!("UpdateCachedParam called");
 
         if state.subscribed_params.contains(&param_name) {
-            // Deleting a param while a node is subscribed to updates will result in
-            // the updateParam endpoint being called, where the value is an empty dictionary.
-            // In these situations we check with the master to see if the param was actually deleted.
-            if value != *EMPTY_STRUCT || state.master_client.has_param(&param_name).await? {
+            if value == *EMPTY_STRUCT || state.master_client.has_param(&param_name).await? {
                 trace!("Updating parameter cache");
 
                 state.param_cache.insert(param_name, value);
             } else {
-                trace!("Param was deleted, removing from cache");
+                trace!("Parameter was deleted, removing from cache");
 
                 state.param_cache.remove(&param_name);
             }

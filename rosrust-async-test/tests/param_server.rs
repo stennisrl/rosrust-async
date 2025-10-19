@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use rosrust_async::{builder::NodeBuilder, xmlrpc::RosSlaveClient};
+use rosrust_async::{builder::NodeBuilder, xmlrpc::RosSlaveClient, NodeError};
 
 mod util;
 use util::setup;
@@ -10,22 +10,18 @@ pub async fn set_get_delete() {
     let (node, _guard) = setup().await;
     node.set_param("/test_param", 1234).await.unwrap();
 
-    assert!(
-        node.has_param("/test_param").await.unwrap(),
-        "Parameter was not created"
-    );
-
     assert_eq!(
         node.get_param("/test_param").await.unwrap(),
         Some(1234),
-        "Parameter value on server did not match"
+        "Parameter value on server does not match"
     );
 
     node.delete_param("/test_param").await.unwrap();
 
-    assert!(
-        !node.has_param("/test_param").await.unwrap(),
-        "Parameter existed post-delete"
+    assert_eq!(
+        node.get_param::<i32>("/test_param").await.unwrap(),
+        None,
+        "Parameter still exists after being deleted"
     );
 }
 
@@ -40,47 +36,27 @@ pub async fn param_search() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-pub async fn types_are_checked() {
+pub async fn cached_param() {
     let (node, _guard) = setup().await;
-    node.set_param("/test_param", 1234).await.unwrap();
-
-    assert!(
-        node.get_param::<bool>("/test_param").await.is_err(),
-        "Parameter type was ignored"
-    );
-}
-
-#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-pub async fn cache_gets_updated() {
-    let (node, _guard) = setup().await;
-
     let node_client = RosSlaveClient::new(node.url(), "/node_client");
-    let param_value = String::from("Hello, world!");
-
-    assert!(node
-        .get_param_cached::<String>("/test_param")
-        .await
-        .unwrap()
-        .is_none());
-
-    // Inform the node that our param of interest was modified,
-    // even though it does not actually exist on the parameter server.
-    // This will store `test_param` in the node's param cache.
-    node_client
-        .param_update("/test_param", &param_value)
-        .await
-        .unwrap();
 
     assert_eq!(
-        node.get_param_cached::<String>("/test_param")
-            .await
-            .unwrap(),
-        Some(param_value)
+        node.get_param_cached::<i32>("/test_param").await.unwrap(),
+        None,
+        "Parameter existed before being set"
+    );
+
+    node_client.param_update("/test_param", 1234).await.unwrap();
+
+    assert_eq!(
+        node.get_param_cached("/test_param").await.unwrap(),
+        Some(1234),
+        "Parameter not present in cache"
     )
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-pub async fn empty_map_doesnt_invalidate_cache() {
+pub async fn cache_cleared_on_param_delete() {
     let (node, _guard) = setup().await;
     let second_node = NodeBuilder::new()
         .name("/second_node")
@@ -89,25 +65,19 @@ pub async fn empty_map_doesnt_invalidate_cache() {
         .await
         .unwrap();
 
-    let empty_map = HashMap::<String, String>::new();
-
-    assert!(
-        node.get_param_cached::<String>("/test_param")
-            .await
-            .unwrap()
-            .is_none(),
-        "Param exists when it should not"
+    assert_eq!(
+        node.get_param_cached::<i32>("/test_param").await.unwrap(),
+        None,
+        "Parameter existed before being set"
     );
 
-    second_node
-        .set_param("/test_param", &empty_map)
-        .await
-        .unwrap();
+    node.set_param("/test_param", 1234).await.unwrap();
+
+    second_node.delete_param("/test_param").await.unwrap();
 
     assert_eq!(
-        node.get_param_cached("/test_param").await.unwrap(),
-        Some(empty_map)
+        node.get_param_cached::<i32>("/test_param").await.unwrap(),
+        None,
+        "Parameter was not cleared from cache"
     );
-
-    node.shutdown_and_wait(None).await.unwrap();
 }

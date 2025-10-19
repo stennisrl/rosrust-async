@@ -1,19 +1,16 @@
 use rosrust_async::{
-    node::builder::NodeBuilder, tcpros::service::client::ClientLinkError, ServiceClientError,
+    builder::NodeBuilder, tcpros::service::client::ClientLinkError, ServiceClientError,
 };
 
 mod util;
-use util::{msg::TwoInts, setup};
-
-use crate::util::{
-    msg::{TwoIntsReq, TwoIntsRes},
-    test_sum,
+use util::{
+    msg::{TwoInts, TwoIntsReq, TwoIntsRes},
+    setup, test_sum,
 };
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 pub async fn call_service() {
     let (node, _guard) = setup().await;
-
     let second_node = NodeBuilder::new()
         .master_url(node.master_url().clone())
         .name("/rosrust_async_2")
@@ -33,8 +30,9 @@ pub async fn call_service() {
         .await
         .unwrap();
 
-    test_sum(&client, 123, 456).await;
-    test_sum(&client, 123, 456).await;
+    test_sum(&client, 0, 10).await;
+    test_sum(&client, 9, 10).await;
+    test_sum(&client, 100, -200).await;
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
@@ -53,7 +51,9 @@ pub async fn call_service_loopback() {
         .await
         .unwrap();
 
-    test_sum(&client, 123, 456).await;
+    test_sum(&client, 0, 10).await;
+    test_sum(&client, 9, 10).await;
+    test_sum(&client, 100, -200).await;
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]

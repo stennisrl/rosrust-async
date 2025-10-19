@@ -23,11 +23,9 @@ mod error;
 
 pub mod builder;
 
-use crate::tcpros::TopicSpec;
-
 use {
     crate::{
-        tcpros::{service::server::CallbackError, Service, Topic},
+        tcpros::{service::server::CallbackError, Service, Topic, TopicSpec},
         xmlrpc::RosMasterClient,
     },
     actors::{
@@ -41,6 +39,7 @@ use {
 
 pub use {
     actors::{
+        parameter::ParameterActorError,
         publisher::{Publisher, PublisherActorError, PublisherError, TypedPublisher},
         service::{ServiceActorError, ServiceClient, ServiceClientError, TypedServiceClient},
         subscriber::{Subscriber, SubscriberActorError, SubscriberError, TypedSubscriber},
@@ -587,7 +586,7 @@ impl Node {
         value: T,
     ) -> NodeResult<()> {
         let value = value.try_to_value()?;
-        
+
         Ok(call!(self.state.param_actor, |reply| {
             ParameterActorMsg::SetParam {
                 name: name.into(),
