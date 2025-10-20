@@ -14,7 +14,7 @@ pub async fn sleep_and_wake() {
     let (node, _guard) = setup().await;
 
     let clock_publisher = node
-        .publish::<ClockMsg>("/clock", 1, false, false)
+        .publish::<ClockMsg>("/clock", 1, false, true)
         .await
         .unwrap();
 

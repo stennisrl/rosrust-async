@@ -36,13 +36,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust-version }}
-      
-      - name: Install Dependencies
-        run: sudo apt-get update && sudo apt-get install -y libudev-dev
 
       - uses: cargo-bins/cargo-binstall@main
 
       - name: Install cargo nextest
         run: cargo binstall cargo-nextest --secure --no-confirm --disable-telemetry
 
-      - run: cargo nextest run --workspace
+      - run: cargo nextest run --workspace --exclude examples
