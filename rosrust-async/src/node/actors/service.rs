@@ -106,7 +106,6 @@ impl Actor for ServiceActor {
         state: &mut Self::State,
     ) -> Result<(), ractor::ActorProcessingErr> {
         for (service_name, (guard, server)) in std::mem::take(&mut state.servers) {
-            trace!("Cleaning up server for service \"{service_name}\"");
             if let Err(e) = Self::cleanup_server(state, guard, server).await {
                 warn!("Failed to clean up server: [service: \"{service_name}\", error: \"{e}\"]");
             }
