@@ -1,10 +1,11 @@
-use ros_core_rs::core::Master;
 use std::{
     future::Future,
     net::{Ipv4Addr, SocketAddrV4},
     sync::mpsc::RecvError,
     time::Duration,
 };
+
+use ros_core_rs::core::Master;
 use tokio::{net::TcpListener, sync::mpsc::UnboundedReceiver};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::EnvFilter;

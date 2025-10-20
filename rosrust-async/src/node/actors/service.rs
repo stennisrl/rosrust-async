@@ -107,7 +107,9 @@ impl Actor for ServiceActor {
     ) -> Result<(), ractor::ActorProcessingErr> {
         for (service_name, (guard, server)) in std::mem::take(&mut state.servers) {
             trace!("Cleaning up server for service \"{service_name}\"");
-            Self::cleanup_server(state, guard, server).await?;
+            if let Err(e) = Self::cleanup_server(state, guard, server).await {
+                warn!("Failed to clean up server: [service: \"{service_name}\", error: \"{e}\"]");
+            }
         }
 
         for (service_name, (guard, _client)) in std::mem::take(&mut state.clients) {
@@ -197,7 +199,9 @@ impl ServiceActor {
 
             // If a client link already exists, return a new handle pointing to it.
             if let Some(guard) = guard.upgrade() {
-                service.spec.validate_compatibility(&client.service().spec)?;
+                service
+                    .spec
+                    .validate_compatibility(&client.service().spec)?;
 
                 return Ok(ServiceClient::new(client.rpc_sender(), guard));
             }
@@ -258,7 +262,9 @@ impl ServiceActor {
 
             // If a client link already exists, return a new handle pointing to it.
             if let Some(guard) = guard.upgrade() {
-                service.spec.validate_compatibility(&server.service().spec)?;
+                service
+                    .spec
+                    .validate_compatibility(&server.service().spec)?;
 
                 return Ok(ServiceServer::new(guard));
             }
