@@ -144,7 +144,7 @@ async fn main() -> anyhow::Result<()> {
     let mut gilrs = Gilrs::new().map_err(|e| anyhow!("Failed to set up gamepad handler: {e}"))?;
 
     // For the sake of simplicity we use the first gamepad reported by gilrs.
-    let (gamepad_id, gamepad) = match gilrs.gamepads().into_iter().next() {
+    let (gamepad_id, gamepad) = match gilrs.gamepads().next() {
         Some(gamepad) => gamepad,
         None => bail!("No gamepads were detected!"),
     };
@@ -206,12 +206,12 @@ async fn main() -> anyhow::Result<()> {
                         EventType::AxisChanged(axis, value, _) => match axis {
                             Axis::LeftStickY => {
                                 velocity_updated = true;
-                                state.ly = value.abs().gt(&DEADZONE).then(|| value).unwrap_or(0.0);
+                                state.ly = if value.abs().gt(&DEADZONE) { value } else { 0.0 };
                             },
 
                             Axis::RightStickX => {
                                 velocity_updated = true;
-                                state.rx = value.abs().gt(&DEADZONE).then(|| -value).unwrap_or(0.0);
+                                state.rx = if value.abs().gt(&DEADZONE) { -value } else { 0.0 };
                             },
 
                             _ => { },
