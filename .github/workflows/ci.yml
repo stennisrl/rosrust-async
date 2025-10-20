@@ -1,8 +1,5 @@
 name: ci
 
-env:
-  MSRV: 1.82
-
 on:
   pull_request:
   push:
@@ -18,7 +15,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: $MSRV
+          toolchain: 1.82
           components: clippy
       
       - name: Install Dependencies
@@ -32,7 +29,7 @@ jobs:
     needs: clippy
     strategy:
       matrix:
-        rust-version: [$MSRV, stable]
+        rust-version: [1.82, stable]
     steps:
       - uses: actions/checkout@v5
 
