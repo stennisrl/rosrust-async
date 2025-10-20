@@ -142,10 +142,12 @@ pub async fn publish_to_multiple_subscribers() {
         }),
     )
     .await
-    .expect(&format!(
-        "Timed out waiting for subscribers to check in, {} of {} completed",
-        rx_message_count.load(Ordering::Acquire),
-        NUM_SUBSCRIBERS
-    ))
+    .unwrap_or_else(|_| {
+        panic!(
+            "Timed out waiting for subscribers to check in, {} of {} completed",
+            rx_message_count.load(Ordering::Acquire),
+            NUM_SUBSCRIBERS
+        )
+    })
     .unwrap();
 }

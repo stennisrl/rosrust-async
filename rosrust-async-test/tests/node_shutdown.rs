@@ -11,7 +11,7 @@ use util::{
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 pub async fn node_handles_api_shutdown() {
     let (node, _guard) = setup().await;
-    let slave_api = RosSlaveClient::new(&node.url(), "/integration_test");
+    let slave_api = RosSlaveClient::new(node.url(), "/integration_test");
 
     slave_api
         .shutdown("Shutdown request from slave API")

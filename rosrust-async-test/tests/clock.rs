@@ -14,7 +14,7 @@ pub async fn sleep_and_wake() {
     let (node, _guard) = setup().await;
 
     let clock_publisher = node
-        .publish::<ClockMsg>("/clock", 1, false, false)
+        .publish::<ClockMsg>("/clock", 1, true, false)
         .await
         .unwrap();
 
@@ -79,7 +79,7 @@ pub async fn multi_sleep() {
 
         let completed_duration = tokio::time::timeout(Duration::from_secs(1), done_rx.recv())
             .await
-            .expect("Timed out waiting for sleep task to complete")
+            .unwrap_or_else(|_| panic!("Timed out waiting for sleep task {duration} to complete"))
             .expect("Task completion channel closed");
 
         // There should not be any additional completion messages in the channel

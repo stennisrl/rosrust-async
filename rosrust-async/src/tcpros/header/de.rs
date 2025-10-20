@@ -318,6 +318,6 @@ mod tests {
         assert_eq!(header.msg_type, "std_msgs/String");
         assert_eq!(header.msg_definition, "string data\n\n");
         assert_eq!(header.md5sum, "992ce8a1687cec8c8bd883ec73ca41d1");
-        assert_eq!(header.latching, true);
+        assert!(header.latching);
     }
 }

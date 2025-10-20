@@ -16,7 +16,7 @@ fn get_number_from_stdin() -> Result<i64, io::Error> {
     loop {
         let mut input = String::new();
         io::stdin().read_line(&mut input)?;
-        
+
         match input.trim().parse::<i64>() {
             Ok(number) => return Ok(number),
             Err(e) => {
@@ -35,15 +35,12 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     info!("Please enter the first number that you'd like to sum:");
-    let first_number = tokio::task::spawn_blocking(|| get_number_from_stdin()).await??;
+    let first_number = tokio::task::spawn_blocking(get_number_from_stdin).await??;
 
     info!("Please enter the second number that you'd like to sum:");
-    let second_number = tokio::task::spawn_blocking(|| get_number_from_stdin()).await??;
+    let second_number = tokio::task::spawn_blocking(get_number_from_stdin).await??;
 
-    let node = NodeBuilder::new()
-        .name("/service_client")
-        .build()
-        .await?;
+    let node = NodeBuilder::new().name("/service_client").build().await?;
 
     let client = node
         .service_client::<TwoInts>("/add_two_ints", false)

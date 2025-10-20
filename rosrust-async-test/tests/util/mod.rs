@@ -114,9 +114,7 @@ pub async fn wait_for_subscriber_connections(
         }),
     )
     .await
-    .expect(&format!(
-        "Timed out waiting for {subscriber_count} subscriber(s) to connect"
-    ))
+    .unwrap_or_else(|_| panic!("Timed out waiting for {subscriber_count} subscriber(s) to connect"))
     .unwrap();
 }
 
@@ -142,9 +140,7 @@ pub async fn wait_for_publisher_connections(
         }),
     )
     .await
-    .expect(&format!(
-        "Timed out waiting for {publisher_count} publisher(s) to connect"
-    ))
+    .unwrap_or_else(|_| panic!("Timed out waiting for {publisher_count} publisher(s) to connect"))
     .unwrap();
 }
 
