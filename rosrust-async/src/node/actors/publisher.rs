@@ -179,7 +179,10 @@ impl PublisherActor {
             guard.disarm();
         }
 
-        state.master_client.unregister_publisher(&topic_name).await?;
+        state
+            .master_client
+            .unregister_publisher(&topic_name)
+            .await?;
         Ok(())
     }
 
@@ -208,7 +211,7 @@ impl PublisherActor {
         state
             .publications
             .get(&topic_name)
-            .map(|(_, publication)| publication.address().clone())
+            .map(|(_, publication)| *publication.address())
     }
 
     #[instrument(skip(state))]

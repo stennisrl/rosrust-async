@@ -275,7 +275,7 @@ impl Node {
         }
 
         let mut hasher = Md5::new();
-        hasher.update(msg.get_md5_representation(&hashes)?);
+        hasher.update(msg.get_md5_representation(hashes)?);
         let hash_string = format!("{:x}", hasher.finalize());
         hashes.insert(msg.path().clone(), hash_string.clone());
 

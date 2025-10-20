@@ -60,7 +60,6 @@ impl NodeBuilder {
 
     fn resolve_bind_address(&self) -> SocketAddr {
         self.bind_address
-            .clone()
             .unwrap_or(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, 0).into())
     }
 
@@ -85,7 +84,7 @@ impl NodeBuilder {
             .or_else(|| env::var("ROS_MASTER_URI").ok())
             .unwrap_or_else(|| String::from("http://127.0.0.1:11311"));
 
-        Ok(Url::parse(&url).map_err(BuilderError::MasterUrl)?)
+        Url::parse(&url).map_err(BuilderError::MasterUrl)
     }
 
     /// Set the name for this node.

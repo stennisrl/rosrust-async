@@ -298,7 +298,9 @@ impl ServiceActor {
         trace!("UnregisterService called");
 
         if let Some((guard, server)) = state.servers.remove(&service_name) {
-            guard.upgrade().map(|guard| guard.disarm());
+            if let Some(guard) = guard.upgrade() {
+                guard.disarm();
+            }
 
             state
                 .master_client

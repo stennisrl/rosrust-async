@@ -169,7 +169,7 @@ impl Publication {
                     };
 
                     let (subscriber_stream, subscriber_header) =
-                        match Self::setup_connection(&header, &header_bytes, tcp_nodelay, subscriber_stream).await {
+                        match Self::setup_connection(&header, header_bytes, tcp_nodelay, subscriber_stream).await {
                             Ok(connection) => connection,
                             Err(e) => {
                                 error!("Failed to set up subscriber connection: {e}");

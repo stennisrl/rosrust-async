@@ -11,7 +11,7 @@ use crate::xmlrpc::{MasterClientError, RosMasterClient};
 
 // This is a little hacky, the tl;dr is that dxr's Value does not
 // expose the structure constructor so we have to do some extra work.
-const EMPTY_STRUCT: LazyLock<Value> = LazyLock::new(|| {
+static EMPTY_STRUCT: LazyLock<Value> = LazyLock::new(|| {
     HashMap::<String, String>::new()
         .try_to_value()
         .expect("try_to_value is infallible for HashMap<String, String>")

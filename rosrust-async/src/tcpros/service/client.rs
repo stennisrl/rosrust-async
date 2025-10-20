@@ -221,8 +221,8 @@ impl ServiceClientLink {
                                 Self::connect_to_service(
                                     &service,
                                     &master_client,
-                                    &client_header_bytes,
-                                    &probe_header_bytes,
+                                    client_header_bytes,
+                                    probe_header_bytes,
                                 ).await?
                             },
                         };
@@ -235,8 +235,7 @@ impl ServiceClientLink {
                                 server_addr = connection.address.to_string()
                             );
 
-                        let mut tcp_stream = &mut connection.tcp_stream;
-                        let rpc_result = Self::handle_rpc(&data, &mut tcp_stream).instrument(span).await;
+                        let rpc_result = Self::handle_rpc(&data, &mut connection.tcp_stream).instrument(span).await;
 
                         if persistent {
                             connection_state = Some(connection);
