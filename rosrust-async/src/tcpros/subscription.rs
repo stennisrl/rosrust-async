@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::{HashMap, HashSet},
     io,
     sync::Arc,
 };
@@ -33,8 +33,8 @@ pub struct Subscription {
     topic: Topic,
     header: SubscriberHeader,
     header_bytes: Vec<u8>,
-    publisher_addrs: Arc<RwLock<BTreeSet<String>>>,
-    latched_msgs: Arc<RwLock<BTreeMap<String, Bytes>>>,
+    publisher_addrs: Arc<RwLock<HashSet<String>>>,
+    latched_msgs: Arc<RwLock<HashMap<String, Bytes>>>,
     data_tx: broadcast::Sender<Bytes>,
     cancel_token: CancellationToken,
     _data_rx: broadcast::Receiver<Bytes>,
@@ -85,11 +85,11 @@ impl Subscription {
         self.data_tx.subscribe()
     }
 
-    pub async fn latched_msgs(&self) -> BTreeSet<Bytes> {
+    pub async fn latched_msgs(&self) -> Vec<Bytes> {
         self.latched_msgs.read().await.values().cloned().collect()
     }
 
-    pub async fn publisher_addrs(&self) -> BTreeSet<String> {
+    pub async fn publisher_addrs(&self) -> HashSet<String> {
         self.publisher_addrs.read().await.clone()
     }
 
@@ -176,7 +176,7 @@ impl Subscription {
 
     async fn subscriber_task(
         publisher_header: PublisherHeader,
-        latched_msgs: Arc<RwLock<BTreeMap<String, Bytes>>>,
+        latched_msgs: Arc<RwLock<HashMap<String, Bytes>>>,
         data_tx: broadcast::Sender<Bytes>,
         mut publisher_stream: TcpStream,
         cancel_token: CancellationToken,

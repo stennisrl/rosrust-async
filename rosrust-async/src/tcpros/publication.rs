@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, io, net::SocketAddr, sync::Arc};
+use std::{collections::HashSet, io, net::SocketAddr, sync::Arc};
 
 use bytes::Bytes;
 use tokio::{
@@ -30,7 +30,7 @@ pub enum PublicationError {
 pub struct Publication {
     topic: Topic,
     address: SocketAddr,
-    subscriber_ids: Arc<RwLock<BTreeSet<String>>>,
+    subscriber_ids: Arc<RwLock<HashSet<String>>>,
     data_tx: broadcast::Sender<Bytes>,
     _drop_guard: DropGuard,
 }
@@ -58,7 +58,7 @@ impl Publication {
 
         let header_bytes = header::to_bytes(&header)?;
 
-        let subscriber_ids = Arc::new(RwLock::new(BTreeSet::<String>::new()));
+        let subscriber_ids = Arc::new(RwLock::new(HashSet::<String>::new()));
         let (data_tx, data_rx) = broadcast::channel::<Bytes>(queue_size);
         let cancel_token = CancellationToken::new();
 
@@ -118,7 +118,7 @@ impl Publication {
         self.data_tx.clone()
     }
 
-    pub async fn subscriber_ids(&self) -> BTreeSet<String> {
+    pub async fn subscriber_ids(&self) -> HashSet<String> {
         self.subscriber_ids.read().await.clone()
     }
 
@@ -130,7 +130,7 @@ impl Publication {
         header: PublisherHeader,
         header_bytes: &[u8],
         tcp_nodelay: bool,
-        subscriber_ids: Arc<RwLock<BTreeSet<String>>>,
+        subscriber_ids: Arc<RwLock<HashSet<String>>>,
         mut data_rx: broadcast::Receiver<Bytes>,
         tcp_listener: TcpListener,
         cancel_token: CancellationToken,

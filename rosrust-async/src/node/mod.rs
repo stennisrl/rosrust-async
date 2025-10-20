@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeSet, HashMap},
+    collections::{HashMap, HashSet},
     future::Future,
     net::SocketAddr,
     sync::Arc,
@@ -349,7 +349,7 @@ impl Node {
     pub async fn get_connected_subscriber_ids(
         &self,
         topic_name: impl Into<String>,
-    ) -> NodeResult<Option<BTreeSet<String>>> {
+    ) -> NodeResult<Option<HashSet<String>>> {
         Ok(call!(self.state.pub_actor, |reply| {
             PublisherActorMsg::GetConnectedSubscriberIDs {
                 topic_name: topic_name.into(),
@@ -470,7 +470,7 @@ impl Node {
     pub async fn get_connected_publisher_urls(
         &self,
         topic_name: impl Into<String>,
-    ) -> NodeResult<Option<BTreeSet<String>>> {
+    ) -> NodeResult<Option<HashSet<String>>> {
         Ok(call!(self.state.sub_actor, |reply| {
             SubscriberActorMsg::GetConnectedPublisherUrls {
                 topic_name: topic_name.into(),
