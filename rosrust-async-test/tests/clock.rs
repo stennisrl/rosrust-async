@@ -2,14 +2,12 @@ use std::time::Duration;
 
 use futures::poll;
 use rosrust::{msg::rosgraph_msgs::Clock as ClockMsg, Duration as RosDuration, Time};
-use rosrust_async::clock::Clock;
 use tokio::sync::mpsc;
 
+use rosrust_async::clock::Clock;
+
 mod util;
-
-use util::setup;
-
-use crate::util::wait_for_subscriber_connections;
+use util::{setup, wait_for_subscriber_connections};
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 pub async fn sleep_and_wake() {
@@ -82,14 +80,14 @@ pub async fn multi_sleep() {
         let completed_duration = tokio::time::timeout(Duration::from_secs(1), done_rx.recv())
             .await
             .expect("Timed out waiting for sleep task to complete")
-            .expect("No sleep tasks completed");
+            .expect("Task completion channel closed");
 
         // There should not be any additional completion messages in the channel
         assert!(done_rx.is_empty(), "Multiple sleep tasks completed");
 
         assert_eq!(
             completed_duration, duration,
-            "Incorrect sleep task completed"
+            "Incorrect sleep task completed",
         );
     }
 }

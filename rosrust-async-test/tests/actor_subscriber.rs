@@ -1,8 +1,10 @@
-mod util;
 use rosrust_async::{node::SubscriberActorError, NodeError};
-use util::{msg::RosString, setup};
 
-use crate::util::msg::TwoIntsReq;
+mod util;
+use util::{
+    msg::{RosString, TwoIntsReq},
+    setup,
+};
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 pub async fn second_subscribe_fails_on_msg_mismatch() {
@@ -40,8 +42,9 @@ pub async fn subscriber_drop_guard() {
 
     drop(subscriber);
 
-    assert!(
-        node.get_subscriptions().await.unwrap().is_empty(),
-        "Subscriber guard did not clean up subscription"
+    assert_eq!(
+        node.get_subscriptions().await.unwrap().len(),
+        0,
+        "Subscriber drop guard did not clean up Subscription"
     );
 }

@@ -18,6 +18,16 @@ pub enum ApiError {
     InvalidRequest(String),
 }
 
+impl ApiError {
+    pub fn server_error(msg: impl Into<String>) -> Self {
+        ApiError::ServerError(msg.into())
+    }
+
+    pub fn invalid_request(msg: impl Into<String>) -> Self {
+        ApiError::InvalidRequest(msg.into())
+    }
+}
+
 /// Represents the ROS1 XML-RPC API response format.
 ///
 /// More information can be found here: <https://wiki.ros.org/ROS/Master_Slave_APIs>
@@ -36,9 +46,7 @@ impl TryToValue for ApiResponse {
     fn try_to_value(&self) -> Result<Value, dxr::DxrError> {
         match self {
             ApiResponse::Success(msg, data) => (RPC_SUCCESS, msg, data.clone()),
-            ApiResponse::Error(ApiError::ServerError(msg)) => {
-                (RPC_SERVER_ERROR, msg, Value::i4(0))
-            }
+            ApiResponse::Error(ApiError::ServerError(msg)) => (RPC_SERVER_ERROR, msg, Value::i4(0)),
             ApiResponse::Error(ApiError::InvalidRequest(msg)) => {
                 (RPC_INVALID_REQUEST, msg, Value::i4(0))
             }
@@ -54,9 +62,7 @@ impl TryFromValue for ApiResponse {
         match status_code {
             RPC_SUCCESS => Ok(ApiResponse::Success(msg, data)),
             RPC_SERVER_ERROR => Ok(ApiResponse::Error(ApiError::ServerError(msg))),
-            RPC_INVALID_REQUEST => {
-                Ok(ApiResponse::Error(ApiError::InvalidRequest(msg)))
-            }
+            RPC_INVALID_REQUEST => Ok(ApiResponse::Error(ApiError::InvalidRequest(msg))),
             mystery_code => Err(dxr::DxrError::InvalidData {
                 error: format!("Invalid ROS status code: {mystery_code}"),
             }),

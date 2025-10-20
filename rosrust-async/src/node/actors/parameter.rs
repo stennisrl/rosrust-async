@@ -1,10 +1,21 @@
-use std::collections::{hash_map::Entry, HashMap, HashSet};
+use std::{
+    collections::{hash_map::Entry, HashMap, HashSet},
+    sync::LazyLock,
+};
 
-use dxr::{DxrError, Value};
+use dxr::{DxrError, TryToValue, Value};
 use ractor::{Actor, RpcReplyPort};
-use tracing::{instrument, trace};
+use tracing::{instrument, trace, warn};
 
 use crate::xmlrpc::{MasterClientError, RosMasterClient};
+
+// This is a little hacky, the tl;dr is that dxr's Value does not
+// expose the structure constructor so we have to do some extra work.
+static EMPTY_STRUCT: LazyLock<Value> = LazyLock::new(|| {
+    HashMap::<String, String>::new()
+        .try_to_value()
+        .expect("try_to_value is infallible for HashMap<String, String>")
+});
 
 pub enum ParameterActorMsg {
     GetParam {
@@ -38,7 +49,6 @@ pub enum ParameterActorMsg {
     UpdateCachedParam {
         name: String,
         value: Value,
-        reply: RpcReplyPort<()>,
     },
 }
 
@@ -83,6 +93,23 @@ impl Actor for ParameterActor {
         Ok(args)
     }
 
+    async fn post_stop(
+        &self,
+        _myself: ractor::ActorRef<Self::Msg>,
+        state: &mut Self::State,
+    ) -> Result<(), ractor::ActorProcessingErr> {
+        for param_name in std::mem::take(&mut state.subscribed_params) {
+            trace!("Unsubscribing from updates for parameter \"{param_name}\"");
+
+            if let Err(e) = state.master_client.unsubscribe_param(&param_name).await {
+                warn!("Failed to unsubscribe from parameter updates: {e}");
+            }
+        }
+
+        trace!("Parameter actor shutdown complete!");
+        Ok(())
+    }
+
     async fn handle(
         &self,
         _myself: ractor::ActorRef<Self::Msg>,
@@ -113,11 +140,13 @@ impl Actor for ParameterActor {
             }
 
             ParameterActorMsg::GetParamNames { reply } => {
-                reply.send(Self::get_param_names(state).await)?
+                reply.send(Self::get_param_names(state).await)?;
             }
 
-            ParameterActorMsg::UpdateCachedParam { name, value, reply } => {
-                reply.send(Self::update_cached_param(state, name, value))?
+            ParameterActorMsg::UpdateCachedParam { name, value } => {
+                if let Err(e) = Self::update_cached_param(state, name, value).await {
+                    warn!("Failed to update cached parameter: {e}");
+                }
             }
         }
 
@@ -143,35 +172,38 @@ impl ParameterActor {
     ) -> ParameterActorResult<Option<Value>> {
         trace!("GetCachedParam called");
 
-        match state.param_cache.entry(param_name.clone()) {
+        if !state.subscribed_params.contains(&param_name) {
+            trace!("Subscribing to parameter updates");
+
+            /*
+                Although subscribeParam returns the parameter's value if it exists,
+                the API will return an empty map if not. For the sake of simplicity
+                we discard the returned value and rely on getParam instead.
+            */
+            state.master_client.subscribe_param_any(&param_name).await?;
+            state.subscribed_params.insert(param_name.clone());
+        }
+
+        let value = match state.param_cache.entry(param_name.clone()) {
             Entry::Occupied(entry) => {
-                trace!("Parameter present in cache");
-                Ok(Some(entry.get().clone()))
+                trace!("Using cached parameter value");
+
+                Some(entry.get().clone())
             }
             Entry::Vacant(entry) => {
-                trace!("Parameter not present in cache");
+                trace!("Parameter not present in cache, fetching from server");
 
-                if state.subscribed_params.get(&param_name).is_none() {
-                    trace!("Subscribing to parameter updates");
-
-                    // Although subscribeParam does return the param's value if it exists,
-                    // confusingly the API will return an empty map if not. We can't treat
-                    // all empty maps as None, so we ignore the returned value and rely on 
-                    // getParam instead.
-                    state.master_client.subscribe_param_any(&param_name).await?;
-                    state.subscribed_params.insert(param_name.clone());
-                }
-
-                trace!("Fetching latest value from server");
                 let param = state.master_client.get_param_any(&param_name).await?;
 
-                if let Some(param) = &param {
-                    entry.insert(param.clone());
+                if let Some(value) = &param {
+                    entry.insert(value.clone());
                 }
 
-                Ok(param)
+                param
             }
-        }
+        };
+
+        Ok(value)
     }
 
     #[instrument(skip(state, value))]
@@ -187,7 +219,10 @@ impl ParameterActor {
             .set_param_any(&param_name, &value)
             .await?;
 
-        state.param_cache.insert(param_name, value);
+        if state.subscribed_params.contains(&param_name) {
+            trace!("Storing parameter in local cache");
+            state.param_cache.insert(param_name, value);
+        }
 
         Ok(())
     }
@@ -199,8 +234,12 @@ impl ParameterActor {
     ) -> ParameterActorResult<()> {
         trace!("DeleteParam called");
 
+        if state.subscribed_params.remove(&param_name) {
+            trace!("Unsubscribing from parameter updates");
+            state.master_client.unsubscribe_param(&param_name).await?;
+        }
+
         state.master_client.delete_param(&param_name).await?;
-        state.subscribed_params.remove(&param_name);
         state.param_cache.remove(&param_name);
 
         Ok(())
@@ -236,12 +275,31 @@ impl ParameterActor {
     }
 
     #[instrument(skip(state, value))]
-    pub fn update_cached_param(
+    pub async fn update_cached_param(
         state: &mut ParameterActorState,
         param_name: String,
         value: Value,
-    ) {
+    ) -> ParameterActorResult<()> {
         trace!("UpdateCachedParam called");
-        state.param_cache.insert(param_name, value);
+
+        if state.subscribed_params.contains(&param_name) {
+            /*
+                When a parameter is deleted, the ROS Master notifies
+                all subscribers via the paramUpdate method using an
+                empty struct as the value. To avoid caching this, empty
+                structs trigger an additional check with the ROS Master
+            */
+            if value != *EMPTY_STRUCT || state.master_client.has_param(&param_name).await? {
+                trace!("Updating parameter cache");
+                state.param_cache.insert(param_name, value);
+            } else {
+                trace!("Parameter was deleted, removing from cache");
+                state.param_cache.remove(&param_name);
+            }
+        } else {
+            warn!("Node not currently subscribed to updates for this parameter");
+        }
+
+        Ok(())
     }
 }

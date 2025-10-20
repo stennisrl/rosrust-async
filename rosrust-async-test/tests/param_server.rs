@@ -1,4 +1,4 @@
-use rosrust_async::xmlrpc::RosSlaveClient;
+use rosrust_async::{builder::NodeBuilder, xmlrpc::RosSlaveClient};
 
 mod util;
 use util::setup;
@@ -8,22 +8,18 @@ pub async fn set_get_delete() {
     let (node, _guard) = setup().await;
     node.set_param("/test_param", 1234).await.unwrap();
 
-    assert!(
-        node.has_param("/test_param").await.unwrap(),
-        "Parameter was not created/set"
-    );
-
     assert_eq!(
         node.get_param("/test_param").await.unwrap(),
         Some(1234),
-        "Parameter value on server did not match"
+        "Parameter value on server does not match"
     );
 
     node.delete_param("/test_param").await.unwrap();
 
-    assert!(
-        !node.has_param("/test_param").await.unwrap(),
-        "Parameter existed post-delete"
+    assert_eq!(
+        node.get_param::<i32>("/test_param").await.unwrap(),
+        None,
+        "Parameter still exists after being deleted"
     );
 }
 
@@ -38,35 +34,48 @@ pub async fn param_search() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-pub async fn types_are_checked() {
+pub async fn cached_param() {
     let (node, _guard) = setup().await;
-    node.set_param("/test_param", 1234).await.unwrap();
+    let node_client = RosSlaveClient::new(node.url(), "/node_client");
 
-    assert!(
-        node.get_param::<bool>("/test_param").await.is_err(),
-        "Parameter type was ignored"
+    assert_eq!(
+        node.get_param_cached::<i32>("/test_param").await.unwrap(),
+        None,
+        "Parameter existed before being set"
     );
+
+    node_client.param_update("/test_param", 1234).await.unwrap();
+
+    assert_eq!(
+        node.get_param_cached("/test_param").await.unwrap(),
+        Some(1234),
+        "Parameter not present in cache"
+    )
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-pub async fn cache_gets_updated() {
+pub async fn cache_cleared_on_param_delete() {
     let (node, _guard) = setup().await;
-
-    let node_client = RosSlaveClient::new(node.url(), "/node_client");
-    let param_value = String::from("Hello, world!");
-
-    // Inform the node that our param of interest was modified,
-    // even though it does not actually exist on the parameter server.
-    // This will store `test_param` in the node's param cache.
-    node_client
-        .param_update("/test_param", &param_value)
+    let second_node = NodeBuilder::new()
+        .name("/second_node")
+        .master_url(node.master_url().to_string())
+        .build()
         .await
         .unwrap();
 
     assert_eq!(
-        node.get_param_cached::<String>("/test_param")
-            .await
-            .unwrap(),
-        Some(param_value)
-    )
+        node.get_param_cached::<i32>("/test_param").await.unwrap(),
+        None,
+        "Parameter existed before being set"
+    );
+
+    node.set_param("/test_param", 1234).await.unwrap();
+
+    second_node.delete_param("/test_param").await.unwrap();
+
+    assert_eq!(
+        node.get_param_cached::<i32>("/test_param").await.unwrap(),
+        None,
+        "Parameter was not cleared from cache"
+    );
 }

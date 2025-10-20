@@ -23,11 +23,9 @@ mod error;
 
 pub mod builder;
 
-use crate::tcpros::TopicSpec;
-
 use {
     crate::{
-        tcpros::{service::server::CallbackError, Service, Topic},
+        tcpros::{service::server::CallbackError, Service, Topic, TopicSpec},
         xmlrpc::RosMasterClient,
     },
     actors::{
@@ -41,6 +39,7 @@ use {
 
 pub use {
     actors::{
+        parameter::ParameterActorError,
         publisher::{Publisher, PublisherActorError, PublisherError, TypedPublisher},
         service::{ServiceActorError, ServiceClient, ServiceClientError, TypedServiceClient},
         subscriber::{Subscriber, SubscriberActorError, SubscriberError, TypedSubscriber},
@@ -276,7 +275,7 @@ impl Node {
         }
 
         let mut hasher = Md5::new();
-        hasher.update(msg.get_md5_representation(&hashes)?);
+        hasher.update(msg.get_md5_representation(hashes)?);
         let hash_string = format!("{:x}", hasher.finalize());
         hashes.insert(msg.path().clone(), hash_string.clone());
 

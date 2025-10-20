@@ -13,12 +13,3 @@ where
     R::try_from_params(values)
         .map_err(|e| ApiError::InvalidRequest(format!("Invalid parameters: {e}")))
 }
-
-fn server_error(message: impl Into<String>) -> ApiError {
-    ApiError::ServerError(message.into())
-}
-
-fn invalid_request(message: impl Into<String>) -> ApiError {
-    ApiError::InvalidRequest(message.into())
-}
-

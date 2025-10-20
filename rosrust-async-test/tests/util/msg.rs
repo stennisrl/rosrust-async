@@ -130,6 +130,7 @@ impl rosrust::ServicePair for TwoInts {
     type Response = TwoIntsRes;
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct DudService;
 

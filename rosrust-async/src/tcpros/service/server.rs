@@ -189,7 +189,7 @@ impl ServiceProvider {
                 client_stream.write_all(probe_header_bytes).await?;
             }
             RequestKind::ClientHandshake(client) => {
-                header::validate_client_compatibility(&service, &client)?;
+                header::validate_client_compatibility(service, &client)?;
                 
                 client_stream.write_all(server_header_bytes).await?;
 
