@@ -1,5 +1,5 @@
 use std::{
-    collections::{hash_map::Entry, BTreeSet, HashMap, VecDeque},
+    collections::{hash_map::Entry, HashMap, HashSet, VecDeque},
     io,
     marker::PhantomData,
     sync::{
@@ -45,7 +45,7 @@ pub enum SubscriberActorMsg {
     },
     GetConnectedPublisherUrls {
         topic_name: String,
-        reply: RpcReplyPort<Option<BTreeSet<String>>>,
+        reply: RpcReplyPort<Option<HashSet<String>>>,
     },
     RegisterSubscriber {
         topic: Topic,
@@ -63,7 +63,7 @@ pub enum SubscriberActorMsg {
     },
     UpdateConnectedPublishers {
         topic_name: String,
-        publishers: BTreeSet<String>,
+        publishers: HashSet<String>,
     },
 }
 
@@ -205,7 +205,7 @@ impl SubscriberActor {
     pub async fn get_connected_publisher_urls(
         state: &mut SubscriberActorState,
         topic_name: String,
-    ) -> Option<BTreeSet<String>> {
+    ) -> Option<HashSet<String>> {
         trace!("GetConnectedPublisherUrls called");
 
         let (_, subscription) = state.subscriptions.get(&topic_name)?;
@@ -266,7 +266,7 @@ impl SubscriberActor {
                 let latched_msgs = subscription.latched_msgs().await;
 
                 return Ok(Subscriber::with_latched(
-                    latched_msgs.into_iter().collect(),
+                    latched_msgs.into(),
                     subscription.data_receiver(),
                     guard,
                 ));
@@ -331,7 +331,7 @@ impl SubscriberActor {
     pub async fn update_connected_publishers(
         state: &mut SubscriberActorState,
         topic_name: String,
-        publisher_addrs: BTreeSet<String>,
+        publisher_addrs: HashSet<String>,
     ) {
         trace!("UpdateConnectedPublishers called");
 

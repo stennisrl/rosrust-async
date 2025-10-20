@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, process, sync::Arc};
+use std::{collections::HashSet, process, sync::Arc};
 
 use async_shutdown::ShutdownManager;
 use async_trait::async_trait;
@@ -245,7 +245,7 @@ impl Handler for PublisherUpdateHandler {
             self.sub_actor,
             SubscriberActorMsg::UpdateConnectedPublishers {
                 topic_name,
-                publishers: BTreeSet::from_iter(publishers),
+                publishers: HashSet::from_iter(publishers),
             }
         )
         .map_err(|e| {

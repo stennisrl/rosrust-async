@@ -1,5 +1,5 @@
 use std::{
-    collections::{hash_map::Entry, BTreeSet, HashMap},
+    collections::{hash_map::Entry, HashMap, HashSet},
     io,
     marker::PhantomData,
     net::{IpAddr, SocketAddr},
@@ -33,7 +33,7 @@ pub enum PublisherActorMsg {
     },
     GetConnectedSubscriberIDs {
         topic_name: String,
-        reply: RpcReplyPort<Option<BTreeSet<String>>>,
+        reply: RpcReplyPort<Option<HashSet<String>>>,
     },
     RegisterPublisher {
         topic: Topic,
@@ -218,7 +218,7 @@ impl PublisherActor {
     pub async fn get_connected_subscriber_ids(
         state: &mut PublisherActorState,
         topic_name: String,
-    ) -> Option<BTreeSet<String>> {
+    ) -> Option<HashSet<String>> {
         trace!("GetConnectedSubscriberIDs called");
 
         let (_, publication) = state.publications.get(&topic_name)?;
